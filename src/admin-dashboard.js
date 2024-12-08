@@ -1,18 +1,34 @@
 const { ipcRenderer } = require('electron');
 const Chart = require('chart.js');
 
-document.addEventListener('DOMContentLoaded', () => {
-    const sections = document.querySelectorAll('.section');
-    const navLinks = document.querySelectorAll('nav a[data-section]');
-    const sectionTitle = document.getElementById('sectionTitle');
+// Define functions globally
+function showAddBookModal() {
+    const modal = document.getElementById('addBookModal');
+    const inventoryContent = document.querySelector('#inventorySection > div'); // Select the entire inventory content div
+    modal.classList.remove('hidden');
+    inventoryContent.style.display = 'none'; // Hide the entire inventory content
+}
 
-    navLinks.forEach(link => {
+function closeAddBookModal() {
+    const modal = document.getElementById('addBookModal');
+    const inventoryContent = document.querySelector('#inventorySection > div'); // Select the entire inventory content div
+    modal.classList.add('hidden');
+    inventoryContent.style.display = 'block'; // Show the entire inventory content
+    document.getElementById('addBookForm').reset();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Add click handlers for navigation
+    document.querySelectorAll('[data-section]').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            const sectionId = link.getAttribute('data-section');
-            sections.forEach(section => section.classList.add('hidden'));
-            document.getElementById(`${sectionId}Section`).classList.remove('hidden');
-            sectionTitle.textContent = link.textContent;
+            const section = e.currentTarget.getAttribute('data-section');
+            switchSection(section);
+            
+            // Load inventory data only when switching to inventory section
+            if (section === 'inventory') {
+                loadInventory();
+            }
         });
     });
 
@@ -27,155 +43,170 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Show home section by default
-    showSection('home');
-    loadDashboardData();
-
-    // Add event listener for report filter form
-    document.getElementById('reportFilterForm').addEventListener('submit', async (e) => {
+    // Form Submission Handler
+    document.getElementById('addBookForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const reportData = await fetchReportData({
-            startDate: formData.get('startDate'),
-            endDate: formData.get('endDate'),
-            filterType: formData.get('filterType'),
-            filterValue: formData.get('filterValue')
-        });
-        populateReportTable(reportData);
+        
+        const formData = {
+            title: document.getElementById('title').value,
+            author: document.getElementById('author').value,
+            isbn: document.getElementById('isbn').value,
+            price: parseFloat(document.getElementById('price').value),
+            stock_quantity: parseInt(document.getElementById('stock').value),
+            publisher: document.getElementById('publisher').value
+        };
+
+        try {
+            const result = await ipcRenderer.invoke('add-book', formData);
+            if (result.success) {
+                await loadInventory(); // Refresh the table
+                
+                const action = e.submitter.getAttribute('data-action');
+                if (action === 'save-close') {
+                    closeAddBookModal();
+                } else if (action === 'save-next') {
+                    document.getElementById('addBookForm').reset();
+                    document.getElementById('title').focus();
+                }
+            } else {
+                alert('Failed to add book: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error adding book:', error);
+            alert('Failed to add book. Please try again.');
+        }
     });
 
-    // Add event listener for download PDF button
-    document.getElementById('downloadPdfBtn').addEventListener('click', downloadReportAsPdf);
+    // Show home section by default
+    switchSection('home');
+    
+    // Initialize inventory data
+    loadInventory();
+
+    // Backup functionality
+    document.getElementById('backupBtn').addEventListener('click', async () => {
+        try {
+            const result = await ipcRenderer.invoke('create-backup');
+            if (result.success) {
+                alert('Backup created successfully at: ' + result.path);
+            } else {
+                alert('Failed to create backup: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Backup error:', error);
+            alert('Failed to create backup. Please try again.');
+        }
+    });
+
+    // Restore functionality
+    document.getElementById('restoreBtn').addEventListener('click', async () => {
+        const fileInput = document.getElementById('restoreFile');
+        if (!fileInput.files.length) {
+            alert('Please select a backup file first');
+            return;
+        }
+
+        const confirmRestore = confirm(
+            'Warning: Restoring from backup will replace all current data. This action cannot be undone. Continue?'
+        );
+
+        if (confirmRestore) {
+            try {
+                const result = await ipcRenderer.invoke('restore-backup', fileInput.files[0].path);
+                if (result.success) {
+                    alert('Database restored successfully. The application will now restart.');
+                    ipcRenderer.invoke('restart-app');
+                } else {
+                    alert('Failed to restore backup: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Restore error:', error);
+                alert('Failed to restore backup. Please try again.');
+            }
+        }
+    });
+
+    // Export functionality
+    document.getElementById('exportCSV').addEventListener('click', async () => {
+        try {
+            const result = await ipcRenderer.invoke('export-data', 'csv');
+            if (result.success) {
+                alert('Data exported successfully to: ' + result.path);
+            } else {
+                alert('Failed to export data: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Failed to export data. Please try again.');
+        }
+    });
+
+    document.getElementById('exportJSON').addEventListener('click', async () => {
+        try {
+            const result = await ipcRenderer.invoke('export-data', 'json');
+            if (result.success) {
+                alert('Data exported successfully to: ' + result.path);
+            } else {
+                alert('Failed to export data: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Failed to export data. Please try again.');
+        }
+    });
 });
 
-async function loadDashboardData() {
+// Function to load inventory
+async function loadInventory() {
     try {
-        // Load summary data
-        const summaryData = await ipcRenderer.invoke('get-dashboard-summary');
-        updateSummaryCards(summaryData);
+        const books = await ipcRenderer.invoke('get-books');
+        const tbody = document.getElementById('booksList');
+        tbody.innerHTML = '';
 
-        // Load sales chart data
-        const salesData = await ipcRenderer.invoke('get-sales-data');
-        initializeSalesChart(salesData);
-
-        // Load top books data
-        const topBooksData = await ipcRenderer.invoke('get-top-books');
-        initializeTopBooksChart(topBooksData);
-
+        books.forEach(book => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${book.title}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${book.author}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${book.stock_quantity}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">LKR ${book.price.toFixed(2)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="editBook(${book.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                    <button onclick="deleteBook(${book.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
     } catch (error) {
-        console.error('Error loading dashboard data:', error);
+        console.error('Failed to load inventory:', error);
+        alert('Failed to load inventory. Please try again.');
     }
 }
 
-function updateSummaryCards(data) {
-    document.getElementById('todaySales').textContent = `LKR ${data.todaySales.toLocaleString()}`;
-    document.getElementById('totalBooks').textContent = data.totalBooks.toLocaleString();
-    document.getElementById('lowStockCount').textContent = data.lowStockCount.toLocaleString();
-}
-
-function initializeSalesChart(data) {
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: [{
-                label: 'Sales',
-                data: data.values,
-                borderColor: 'rgb(59, 130, 246)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
-
-function initializeTopBooksChart(data) {
-    const ctx = document.getElementById('topBooksChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: data.labels,
-            datasets: [{
-                label: 'Copies Sold',
-                data: data.values,
-                backgroundColor: 'rgb(59, 130, 246)'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
-
-function showSection(sectionId) {
-    const sections = document.querySelectorAll('.section');
-    sections.forEach(section => {
+function switchSection(sectionId) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
         section.classList.add('hidden');
     });
-    document.getElementById(`${sectionId}Section`).classList.remove('hidden');
+    
+    // Show selected section
+    document.getElementById(sectionId + 'Section').classList.remove('hidden');
+    
+    // Update section title
     document.getElementById('sectionTitle').textContent = 
-        sectionId === 'home' ? 'Dashboard' : sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
+        sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
 }
 
-function createBackup() {
-    ipcRenderer.invoke('create-backup').then(() => {
-        alert('Backup created successfully');
-        loadBackupHistory();
-    }).catch(err => {
-        console.error('Error creating backup:', err);
-        alert('Failed to create backup');
-    });
-}
-
-function restoreBackup() {
-    // Implement restore backup functionality
-    alert('Restore backup functionality not yet implemented');
-}
-
-function showAddUserForm() {
-    // Show form to add a new user
-}
-
-function showAddBookForm() {
-    // Show form to add a new book
-}
-
-async function fetchReportData(filters) {
-    try {
-        return await ipcRenderer.invoke('generate-report', filters);
-    } catch (error) {
-        console.error('Error fetching report data:', error);
-        return [];
+// Escape key to close modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('addBookModal').classList.contains('hidden')) {
+        closeAddBookModal();
     }
-}
+});
 
-function populateReportTable(data) {
-    const tableBody = document.getElementById('reportTableBody');
-    tableBody.innerHTML = ''; // Clear existing data
-
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap">${row.date}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${row.title}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${row.seller}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${row.publisher}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${row.genre}</td>
-            <td class="px-6 py-4 whitespace-nowrap">${row.quantity}</td>
-            <td class="px-6 py-4 whitespace-nowrap">LKR ${row.total.toLocaleString()}</td>
-        `;
-        tableBody.appendChild(tr);
-    });
-}
-
-function downloadReportAsPdf() {
-    const reportData = document.getElementById('reportTableBody').innerHTML;
-    ipcRenderer.invoke('download-report-pdf', reportData).catch(error => {
-        console.error('Error downloading PDF:', error);
-    });
-} 
+// Close modal when clicking outside
+document.getElementById('addBookModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        closeAddBookModal();
+    }
+});
