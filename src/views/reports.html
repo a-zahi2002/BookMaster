@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Reports - Bookstore POS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./styles.css" rel="stylesheet">
+    <script src="../node_modules/chart.js/dist/chart.umd.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar (reuse from index.html) -->
+        <div class="w-64 bg-white shadow-lg">
+            <!-- ... (sidebar content) ... -->
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            <h1 class="text-2xl font-semibold mb-6">Reports</h1>
+            
+            <!-- Report Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-lg font-medium mb-4">Sales Report</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="salesRange" class="block text-sm font-medium text-gray-700">Date Range</label>
+                            <select id="salesRange" name="salesRange" aria-label="Date Range" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <button onclick="generateSalesReport()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg">
+                            Generate Report
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-lg font-medium mb-4">Inventory Status</h2>
+                    <div class="space-y-4">
+                        <button onclick="generateInventoryReport()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg">
+                            Generate Report
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-lg font-medium mb-4">Top Selling Books</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="topSellingRange" class="block text-sm font-medium text-gray-700">Time Period</label>
+                            <select id="topSellingRange" name="topSellingRange" aria-label="Time Period" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                        <button onclick="generateTopSellingReport()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg">
+                            Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <canvas id="topSellingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="../reports.js"></script>
+</body>
+</html>

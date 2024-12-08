@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Dashboard - Bookstore POS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="styles.output.css" rel="stylesheet">
+    <!-- Add Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-lg">
+            <div class="p-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Admin Panel</h1>
+                <p class="text-sm text-gray-600" id="adminName"></p>
+            </div>
+            <nav class="mt-6">
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="home">
+                    <span>Home</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="inventory">
+                    <span>Inventory Management</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="reports">
+                    <span>Reports & Analytics</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="settings">
+                    <span>Settings</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-red-600 hover:bg-red-50" id="logoutBtn">
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <div class="h-16 bg-white shadow-sm flex items-center justify-between px-6">
+                <h2 class="text-xl font-semibold text-gray-800" id="sectionTitle">Dashboard</h2>
+                <div class="flex items-center space-x-4">
+                    <span id="currentTime" class="text-gray-600"></span>
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="flex-1 overflow-auto p-6">
+                <!-- Home Section (Default) -->
+                <div id="homeSection" class="section">
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <!-- Total Sales Card -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-gray-500 text-sm font-medium">Total Sales (Today)</h3>
+                            <div class="flex items-center mt-2">
+                                <span class="text-3xl font-bold text-gray-800" id="todaySales">LKR 0</span>
+                            </div>
+                        </div>
+                        <!-- Books in Stock Card -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-gray-500 text-sm font-medium">Books in Stock</h3>
+                            <div class="flex items-center mt-2">
+                                <span class="text-3xl font-bold text-gray-800" id="totalBooks">0</span>
+                            </div>
+                        </div>
+                        <!-- Low Stock Alert Card -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-gray-500 text-sm font-medium">Low Stock Items</h3>
+                            <div class="flex items-center mt-2">
+                                <span class="text-3xl font-bold text-red-600" id="lowStockCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Sales Chart -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Sales Overview</h3>
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                        <!-- Inventory Chart -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Top Selling Books</h3>
+                            <canvas id="topBooksChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Management Section -->
+                <div id="inventorySection" class="section hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold">Inventory Management</h3>
+                            <button onclick="showAddBookForm()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                                Add New Book
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="booksList" class="divide-y divide-gray-200">
+                                    <!-- Books will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reportsSection" class="section hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-4">Reports & Analytics</h3>
+                        <!-- Filter Form -->
+                        <form id="reportFilterForm" class="space-y-4 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+                                    <input type="date" id="startDate" name="startDate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                </div>
+                                <div>
+                                    <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
+                                    <input type="date" id="endDate" name="endDate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                </div>
+                                <div>
+                                    <label for="filterType" class="block text-sm font-medium text-gray-700">Filter By</label>
+                                    <select id="filterType" name="filterType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                        <option value="">None</option>
+                                        <option value="seller">Seller</option>
+                                        <option value="publisher">Publisher</option>
+                                        <option value="genre">Genre</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filterValue" class="block text-sm font-medium text-gray-700">Filter Value</label>
+                                    <input type="text" id="filterValue" name="filterValue" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                </div>
+                            </div>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Generate Report</button>
+                        </form>
+
+                        <!-- Report Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seller</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Publisher</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Genre</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody" class="divide-y divide-gray-200">
+                                    <!-- Report data will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Download PDF Button -->
+                        <button id="downloadPdfBtn" class="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg">Download PDF</button>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settingsSection" class="section hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-4">Settings</h3>
+                        <div class="space-y-4">
+                            <button onclick="createBackup()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                                Create Backup
+                            </button>
+                            <button onclick="restoreBackup()" class="px-4 py-2 bg-green-600 text-white rounded-lg">
+                                Restore Backup
+                            </button>
+                            <div id="backupHistory" class="mt-6">
+                                <!-- Backup history will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../admin-dashboard.js"></script>
+</body>
+</html> 
