@@ -299,3 +299,72 @@ ipcMain.handle('restart-app', () => {
     app.relaunch();
     app.exit();
 });
+
+ipcMain.handle('get-sales-overview', async () => {
+    try {
+        const [totalSales] = await db.get('SELECT COALESCE(SUM(total_amount), 0) as total FROM sales');
+        const [totalItemsSold] = await db.get('SELECT COALESCE(SUM(quantity), 0) as total FROM sales');
+        const [totalTransactions] = await db.get('SELECT COUNT(*) as count FROM sales');
+
+        return {
+            totalSales: totalSales.total || 0,
+            totalItemsSold: totalItemsSold.total || 0,
+            totalTransactions: totalTransactions.count
+        };
+    } catch (error) {
+        console.error('Error getting sales overview:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('get-recent-transactions', async () => {
+    try {
+        const transactions = await db.all(`
+            SELECT * FROM sales 
+            ORDER BY date DESC 
+            LIMIT 5
+        `);
+        return transactions;
+    } catch (error) {
+        console.error('Error getting recent transactions:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('get-sales-data', async () => {
+    try {
+        const salesData = await db.all(`
+            SELECT DATE(date) as date, SUM(total_amount) as total 
+            FROM sales 
+            GROUP BY DATE(date)
+            ORDER BY DATE(date)
+        `);
+        return {
+            labels: salesData.map(data => data.date),
+            sales: salesData.map(data => data.total)
+        };
+    } catch (error) {
+        console.error('Error getting sales data:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('get-available-books', async () => {
+    try {
+        const books = await db.all('SELECT * FROM books WHERE stock_quantity > 0');
+        return books;
+    } catch (error) {
+        console.error('Error getting available books:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('get-book-details', async (event, bookId) => {
+    try {
+        const book = await db.get('SELECT * FROM books WHERE id = ?', bookId);
+        return book;
+    } catch (error) {
+        console.error('Error getting book details:', error);
+        throw error;
+    }
+});

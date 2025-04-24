@@ -1,42 +1,11 @@
 const { ipcRenderer } = require('electron');
 
-let cart = [];
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Logout button handler
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-        try {
-            await ipcRenderer.invoke('logout');
-            console.log('Logout successful');
-        } catch (error) {
-            console.error('Logout failed:', error);
-            alert('Failed to logout. Please try again.');
-        }
-    });
-
-    // Section navigation
-    document.querySelectorAll('[data-section]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection(e.currentTarget.dataset.section);
-        });
-    });
-
-    // Load available books
     loadAvailableBooks();
-
-    // Initialize cart
-    updateCartDisplay();
+    loadSalesOverview();
+    loadRecentTransactions();
+    renderSalesChart();
 });
-
-function showSection(sectionId) {
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.add('hidden');
-    });
-    document.getElementById(`${sectionId}Section`).classList.remove('hidden');
-    document.getElementById('sectionTitle').textContent = 
-        sectionId === 'pos' ? 'Point of Sale' : 'View Books';
-}
 
 async function loadAvailableBooks() {
     try {
@@ -51,106 +20,104 @@ async function loadAvailableBooks() {
                 <td class="px-6 py-4 whitespace-nowrap">LKR ${book.price.toLocaleString()}</td>
                 <td class="px-6 py-4 whitespace-nowrap">${book.stock}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <button onclick="addToCart(${book.id})" 
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            ${book.stock <= 0 ? 'disabled' : ''}>
-                        Add to Cart
-                    </button>
+                    <button onclick="addToCart(${book.id})" class="text-blue-600 hover:text-blue-900 mr-3">Add to Cart</button>
+                    <button onclick="viewBookDetails(${book.id})" class="text-green-600 hover:text-green-900">View Details</button>
                 </td>
             `;
             tbody.appendChild(row);
         });
     } catch (error) {
-        console.error('Failed to load books:', error);
-        alert('Failed to load available books. Please try again.');
+        console.error('Failed to load available books:', error);
     }
 }
 
-async function addToCart(bookId) {
-    try {
-        const book = await ipcRenderer.invoke('get-book', bookId);
-        const existingItem = cart.find(item => item.id === bookId);
-
-        if (existingItem) {
-            if (existingItem.quantity < book.stock) {
-                existingItem.quantity++;
-            } else {
-                alert('Maximum stock reached');
-                return;
-            }
-        } else {
-            cart.push({
-                id: bookId,
-                title: book.title,
-                price: book.price,
-                quantity: 1
-            });
-        }
-
-        updateCartDisplay();
-    } catch (error) {
-        console.error('Failed to add to cart:', error);
-        alert('Failed to add item to cart. Please try again.');
-    }
+function addToCart(bookId) {
+    // Logic to add the book to the cart
+    console.log(`Book ${bookId} added to cart`);
 }
 
-function updateCartDisplay() {
-    const cartItems = document.getElementById('cartItems');
-    const cartTotal = document.getElementById('cartTotal');
-    const cartCount = document.getElementById('cartCount');
-
-    cartItems.innerHTML = '';
-    let total = 0;
-
-    cart.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'flex justify-between items-center';
-        itemDiv.innerHTML = `
-            <div>
-                <h4 class="font-medium">${item.title}</h4>
-                <p class="text-sm text-gray-600">
-                    LKR ${item.price.toLocaleString()} x ${item.quantity}
-                </p>
-            </div>
-            <button onclick="removeFromCart(${item.id})" class="text-red-600 hover:text-red-900">
-                Remove
-            </button>
+function viewBookDetails(bookId) {
+    // Fetch book details and display in modal
+    ipcRenderer.invoke('get-book-details', bookId).then(book => {
+        const content = `
+            <h4 class="text-md font-medium">Title: ${book.title}</h4>
+            <p><strong>Author:</strong> ${book.author}</p>
+            <p><strong>Price:</strong> LKR ${book.price.toLocaleString()}</p>
+            <p><strong>Stock:</strong> ${book.stock}</p>
+            <p><strong>Description:</strong> ${book.description}</p>
         `;
-        cartItems.appendChild(itemDiv);
-        total += item.price * item.quantity;
+        document.getElementById('bookDetailsContent').innerHTML = content;
+        document.getElementById('bookDetailsModal').classList.remove('hidden');
+    }).catch(error => {
+        console.error('Failed to load book details:', error);
+    });
+}
+
+function closeBookDetailsModal() {
+    document.getElementById('bookDetailsModal').classList.add('hidden');
+}
+
+async function loadSalesOverview() {
+    try {
+        const overview = await ipcRenderer.invoke('get-sales-overview');
+        document.getElementById('totalSales').textContent = `LKR ${overview.totalSales.toLocaleString()}`;
+        document.getElementById('totalItemsSold').textContent = overview.totalItemsSold;
+        document.getElementById('totalTransactions').textContent = overview.totalTransactions;
+    } catch (error) {
+        console.error('Failed to load sales overview:', error);
+    }
+}
+
+async function loadRecentTransactions() {
+    try {
+        const transactions = await ipcRenderer.invoke('get-recent-transactions');
+        const tbody = document.getElementById('recentTransactionsList');
+        tbody.innerHTML = '';
+
+        transactions.forEach(transaction => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">${new Date(transaction.date).toLocaleDateString()}</td>
+                <td class="px-6 py-4 whitespace-nowrap">LKR ${transaction.total.toLocaleString()}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${transaction.itemsSold}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Failed to load recent transactions:', error);
+    }
+}
+
+function renderSalesChart() {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], // Populate with dates
+            datasets: [{
+                label: 'Sales',
+                data: [], // Populate with sales data
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
     });
 
-    cartTotal.textContent = `LKR ${total.toLocaleString()}`;
-    cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-}
-
-function removeFromCart(bookId) {
-    cart = cart.filter(item => item.id !== bookId);
-    updateCartDisplay();
-}
-
-async function processPayment(method) {
-    if (cart.length === 0) {
-        alert('Cart is empty');
-        return;
-    }
-
-    try {
-        await ipcRenderer.invoke('process-sale', {
-            items: cart,
-            paymentMethod: method
-        });
-        cart = [];
-        updateCartDisplay();
-        alert('Payment successful!');
-        loadAvailableBooks(); // Refresh available books
-    } catch (error) {
-        console.error('Payment failed:', error);
-        alert('Payment failed. Please try again.');
-    }
-}
-
-function toggleCart() {
-    const cartPanel = document.getElementById('cartPanel');
-    cartPanel.classList.toggle('hidden');
+    // Fetch sales data for the chart
+    ipcRenderer.invoke('get-sales-data').then(data => {
+        salesChart.data.labels = data.labels; // Dates
+        salesChart.data.datasets[0].data = data.sales; // Sales amounts
+        salesChart.update();
+    }).catch(error => {
+        console.error('Failed to load sales data for chart:', error);
+    });
 } 

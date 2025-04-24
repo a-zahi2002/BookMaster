@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="styles.output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen">
@@ -21,6 +22,9 @@
                 <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="books">
                     <span>View Books</span>
                 </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="sales">
+                    <span>Sales Dashboard</span>
+                </a>
                 <a href="#" class="flex items-center px-6 py-3 text-red-600 hover:bg-red-50" id="logoutBtn">
                     <span>Logout</span>
                 </a>
@@ -31,7 +35,7 @@
         <div class="flex-1 flex flex-col">
             <!-- Top Bar -->
             <div class="h-16 bg-white shadow-sm flex items-center justify-between px-6">
-                <h2 class="text-xl font-semibold text-gray-800" id="sectionTitle">Point of Sale</h2>
+                <h2 class="text-xl font-semibold text-gray-800" id="sectionTitle">Sales Dashboard</h2>
                 <div class="flex items-center space-x-4">
                     <button onclick="toggleCart()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
                         Cart (<span id="cartCount">0</span>)
@@ -43,7 +47,7 @@
             <div class="flex-1 overflow-auto p-6">
                 <!-- Point of Sale Section -->
                 <div id="posSection" class="section">
-                    <div class="bg-white rounded-lg shadow p-6">
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
                         <h3 class="text-lg font-semibold mb-4">Available Books</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
@@ -90,6 +94,51 @@
                                 Mobile Payment
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- View Books Section -->
+                <div id="booksSection" class="section hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-4">Available Books</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="viewBooksList" class="divide-y divide-gray-200">
+                                    <!-- Books will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Details Modal -->
+    <div id="bookDetailsModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-white"></div>
+        <div class="absolute inset-y-0 right-0 flex" style="left: 16rem;">
+            <div class="relative w-full bg-white">
+                <div class="h-full p-6">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h3 class="text-2xl font-semibold text-gray-800">Book Details</h3>
+                        <button onclick="closeBookDetailsModal()" class="text-gray-500 hover:text-gray-700 p-2">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="bookDetailsContent">
+                        <!-- Book details will be inserted here -->
                     </div>
                 </div>
             </div>
