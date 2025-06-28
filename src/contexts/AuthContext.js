@@ -14,11 +14,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if running in Electron
   const isElectron = window.require && window.require('electron');
 
   useEffect(() => {
-    // Check for existing user session
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
@@ -31,11 +29,9 @@ export const AuthProvider = ({ children }) => {
       let userData;
       
       if (isElectron) {
-        // Use Electron IPC for desktop app
         const { ipcRenderer } = window.require('electron');
         userData = await ipcRenderer.invoke('login', { username, password });
       } else {
-        // Use web-based authentication
         userData = await webLogin(username, password);
       }
 
@@ -48,17 +44,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const webLogin = async (username, password) => {
-    // Simulate authentication for web version
     const users = [
-      { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
-      { id: 2, username: 'manager', password: 'manager123', role: 'manager' },
-      { id: 3, username: 'user', password: 'user123', role: 'user' }
+      { id: 1, username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator' },
+      { id: 2, username: 'manager', password: 'manager123', role: 'manager', name: 'Manager' },
+      { id: 3, username: 'cashier', password: 'cashier123', role: 'cashier', name: 'Cashier' }
     ];
 
     const foundUser = users.find(u => u.username === username && u.password === password);
     
     if (!foundUser) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid username or password');
     }
 
     const { password: _, ...userData } = foundUser;

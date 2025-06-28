@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import Sidebar from './Sidebar';
 import AddBookModal from './AddBookModal';
+import AnalyticsDashboard from './Analytics/AnalyticsDashboard';
+import ReportsView from './Analytics/ReportsView';
 
 const ManagerDashboard = () => {
   const { user, logout } = useAuth();
@@ -15,9 +17,10 @@ const ManagerDashboard = () => {
   }, []);
 
   const sidebarItems = [
-    { id: 'home', label: 'Home', icon: '🏠' },
+    { id: 'home', label: 'Dashboard', icon: '🏠' },
+    { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'inventory', label: 'Inventory Management', icon: '📚' },
-    { id: 'reports', label: 'Reports', icon: '📊' }
+    { id: 'reports', label: 'Reports', icon: '📋' }
   ];
 
   const renderContent = () => {
@@ -38,6 +41,12 @@ const ManagerDashboard = () => {
                     {books.filter(book => book.stock_quantity < 10).length}
                   </p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-600">Total Value</p>
+                  <p className="text-2xl font-semibold text-green-600">
+                    LKR {books.reduce((sum, book) => sum + (book.price * book.stock_quantity), 0).toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -50,10 +59,43 @@ const ManagerDashboard = () => {
                 >
                   Add New Book
                 </button>
+                <button
+                  onClick={() => setActiveSection('analytics')}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  View Analytics
+                </button>
+                <button
+                  onClick={() => setActiveSection('reports')}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  Generate Report
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Performance</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600">Today's Sales</p>
+                  <p className="text-2xl font-semibold text-blue-600">LKR 32,450</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">This Week</p>
+                  <p className="text-2xl font-semibold text-green-600">LKR 156,780</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Growth</p>
+                  <p className="text-2xl font-semibold text-purple-600">+15.3%</p>
+                </div>
               </div>
             </div>
           </div>
         );
+
+      case 'analytics':
+        return <AnalyticsDashboard />;
 
       case 'inventory':
         return (
@@ -98,12 +140,7 @@ const ManagerDashboard = () => {
         );
 
       case 'reports':
-        return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">Reports</h3>
-            <p className="text-gray-600">Reports functionality will be implemented here.</p>
-          </div>
-        );
+        return <ReportsView />;
 
       default:
         return null;

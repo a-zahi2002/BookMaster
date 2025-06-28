@@ -16,7 +16,6 @@ export const DataProvider = ({ children }) => {
   const [books, setBooks] = useState([]);
   const [cart, setCart] = useState([]);
 
-  // Mock data for web version
   const mockBooks = [
     {
       id: 1,
@@ -44,6 +43,24 @@ export const DataProvider = ({ children }) => {
       price: 1350,
       stock_quantity: 30,
       publisher: "Secker & Warburg"
+    },
+    {
+      id: 4,
+      title: "Pride and Prejudice",
+      author: "Jane Austen",
+      isbn: "978-0-14-143951-8",
+      price: 1100,
+      stock_quantity: 22,
+      publisher: "Penguin Classics"
+    },
+    {
+      id: 5,
+      title: "The Catcher in the Rye",
+      author: "J.D. Salinger",
+      isbn: "978-0-316-76948-0",
+      price: 1400,
+      stock_quantity: 15,
+      publisher: "Little, Brown and Company"
     }
   ];
 
@@ -55,13 +72,11 @@ export const DataProvider = ({ children }) => {
         setBooks(booksData);
         return booksData;
       } else {
-        // Use mock data for web version
         setBooks(mockBooks);
         return mockBooks;
       }
     } catch (error) {
       console.error('Error fetching books:', error);
-      // Fallback to mock data
       setBooks(mockBooks);
       return mockBooks;
     }
@@ -73,11 +88,10 @@ export const DataProvider = ({ children }) => {
         const { ipcRenderer } = window.require('electron');
         const result = await ipcRenderer.invoke('add-book', bookData);
         if (result.success) {
-          await getBooks(); // Refresh books list
+          await getBooks();
         }
         return result;
       } else {
-        // Simulate adding book for web version
         const newBook = {
           id: Date.now(),
           ...bookData
@@ -91,24 +105,77 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  const addToCart = (bookId) => {
+  const updateBook = async (id, bookData) => {
+    try {
+      if (isElectron) {
+        const { ipcRenderer } = window.require('electron');
+        const result = await ipcRenderer.invoke('update-book', id, bookData);
+        if (result.success) {
+          await getBooks();
+        }
+        return result;
+      } else {
+        setBooks(prev => prev.map(book => 
+          book.id === id ? { ...book, ...bookData } : book
+        ));
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Error updating book:', error);
+      throw error;
+    }
+  };
+
+  const deleteBook = async (id) => {
+    try {
+      if (isElectron) {
+        const { ipcRenderer } = window.require('electron');
+        const result = await ipcRenderer.invoke('delete-book', id);
+        if (result.success) {
+          await getBooks();
+        }
+        return result;
+      } else {
+        setBooks(prev => prev.filter(book => book.id !== id));
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Error deleting book:', error);
+      throw error;
+    }
+  };
+
+  const addToCart = (bookId, quantity = 1) => {
     const book = books.find(b => b.id === bookId);
-    if (book && book.stock_quantity > 0) {
+    if (book && book.stock_quantity >= quantity) {
       const existingItem = cart.find(item => item.bookId === bookId);
       if (existingItem) {
         setCart(prev => prev.map(item => 
           item.bookId === bookId 
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         ));
       } else {
         setCart(prev => [...prev, {
           bookId: book.id,
           title: book.title,
+          author: book.author,
           price: book.price,
-          quantity: 1
+          quantity: quantity
         }]);
       }
+    }
+  };
+
+  const updateCartItem = (bookId, quantity) => {
+    if (quantity <= 0) {
+      removeFromCart(bookId);
+    } else {
+      setCart(prev => prev.map(item => 
+        item.bookId === bookId 
+          ? { ...item, quantity }
+          : item
+      ));
     }
   };
 
@@ -120,14 +187,44 @@ export const DataProvider = ({ children }) => {
     setCart([]);
   };
 
+  const processCheckout = async (paymentMethod = 'cash') => {
+    try {
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      // Simulate processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update stock quantities
+      for (const item of cart) {
+        const book = books.find(b => b.id === item.bookId);
+        if (book) {
+          await updateBook(item.bookId, {
+            ...book,
+            stock_quantity: book.stock_quantity - item.quantity
+          });
+        }
+      }
+      
+      clearCart();
+      return { success: true, total, paymentMethod };
+    } catch (error) {
+      console.error('Checkout error:', error);
+      throw error;
+    }
+  };
+
   const value = {
     books,
     cart,
     getBooks,
     addBook,
+    updateBook,
+    deleteBook,
     addToCart,
+    updateCartItem,
     removeFromCart,
-    clearCart
+    clearCart,
+    processCheckout
   };
 
   return (

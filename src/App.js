@@ -1,11 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
-import Login from './components/Login';
-import AdminDashboard from './components/AdminDashboard';
-import ManagerDashboard from './components/ManagerDashboard';
-import SalesDashboard from './components/SalesDashboard';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -13,34 +11,18 @@ function App() {
     <AuthProvider>
       <DataProvider>
         <Router>
-          <div className="App">
+          <div className="min-h-screen bg-gray-50">
             <Routes>
-              <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
               <Route 
-                path="/admin" 
+                path="/dashboard" 
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
+                  <ProtectedRoute>
+                    <Dashboard />
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/manager" 
-                element={
-                  <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                    <ManagerDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/sales" 
-                element={
-                  <ProtectedRoute allowedRoles={['admin', 'manager', 'user']}>
-                    <SalesDashboard />
-                  </ProtectedRoute>
-                } 
-              />
+              <Route path="/" element={<Navigate to="/login" replace />} />
             </Routes>
           </div>
         </Router>
