@@ -30,7 +30,9 @@ async function initializeDatabase() {
                 isbn TEXT NOT NULL,
                 price REAL NOT NULL,
                 stock_quantity INTEGER NOT NULL,
-                publisher TEXT NOT NULL
+                publisher TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
         console.log('Books table initialized');
@@ -50,7 +52,7 @@ function createWindow() {
         }
     });
 
-    // In development, load from React dev server
+    // Always load the React app
     const isDev = process.env.NODE_ENV === 'development';
     
     if (isDev) {
@@ -112,6 +114,29 @@ ipcMain.handle('get-inventory', async () => {
     } catch (error) {
         console.error('Database error:', error);
         throw error;
+    }
+});
+
+ipcMain.handle('update-book', async (event, id, bookData) => {
+    try {
+        await db.run(
+            'UPDATE books SET title = ?, author = ?, isbn = ?, price = ?, stock_quantity = ?, publisher = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [bookData.title, bookData.author, bookData.isbn, bookData.price, bookData.stock_quantity, bookData.publisher, id]
+        );
+        return { success: true };
+    } catch (error) {
+        console.error('Database error:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('delete-book', async (event, id) => {
+    try {
+        await db.run('DELETE FROM books WHERE id = ?', [id]);
+        return { success: true };
+    } catch (error) {
+        console.error('Database error:', error);
+        return { success: false, error: error.message };
     }
 });
 
