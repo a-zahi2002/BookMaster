@@ -7,7 +7,7 @@ const DatabaseService = require('./src/services/database.service');
 const dbService = new DatabaseService();
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
-let db; // Declare db variable in global scope
+let db;
 
 let mainWindow = null;
 const authService = new AuthService();
@@ -39,41 +39,26 @@ async function initializeDatabase() {
     }
 }
 
-// Add this debug IPC handler to test IPC communication
-ipcMain.handle('test-ipc', async () => {
-    console.log('IPC test successful');
-    return 'IPC working';
-});
-
-// Helper function to verify file exists
-function verifyFileExists(filePath) {
-    try {
-        return fs.existsSync(filePath);
-    } catch (err) {
-        console.error('Error checking file:', err);
-        return false;
-    }
-}
-
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            enableRemoteModule: true
         }
     });
 
-    const loginPath = path.join(__dirname, 'src', 'views', 'login.html');
-    console.log('Loading login page:', loginPath);
+    // In development, load from React dev server
+    const isDev = process.env.NODE_ENV === 'development';
     
-    if (verifyFileExists(loginPath)) {
-        mainWindow.loadFile(loginPath).catch(err => {
-            console.error('Failed to load login page:', err);
-        });
+    if (isDev) {
+        mainWindow.loadURL('http://localhost:3000');
+        mainWindow.webContents.openDevTools();
     } else {
-        console.error('Login file not found:', loginPath);
+        // In production, load from built React app
+        mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
     }
 
     mainWindow.on('closed', () => {
@@ -87,41 +72,10 @@ app.whenReady().then(async () => {
     createWindow();
 });
 
+// IPC handlers for Electron-specific functionality
 ipcMain.handle('login', async (event, credentials) => {
     try {
         const user = await authService.login(credentials.username, credentials.password);
-        let dashboardPath;
-
-        // Map roles to dashboard files with correct paths
-        switch (user.role) {
-            case 'admin':
-                dashboardPath = path.join(__dirname, 'src', 'views', 'admin-dashboard.html');
-                break;
-            case 'manager':
-                dashboardPath = path.join(__dirname, 'src', 'views', 'manager-dashboard.html');
-                break;
-            case 'user':
-                dashboardPath = path.join(__dirname, 'src', 'views', 'sales-dashboard.html');
-                break;
-            default:
-                throw new Error('Invalid role');
-        }
-
-        // Debug log
-        console.log('Attempting to load dashboard:', dashboardPath);
-        console.log('User role:', user.role);
-
-        // Verify file exists
-        if (!fs.existsSync(dashboardPath)) {
-            console.error('Dashboard file not found:', dashboardPath);
-            throw new Error(`Dashboard file not found: ${dashboardPath}`);
-        }
-
-        if (mainWindow) {
-            await mainWindow.loadFile(dashboardPath);
-            console.log('Successfully loaded dashboard');
-        }
-        
         return user;
     } catch (error) {
         console.error('Login failed:', error);
@@ -131,17 +85,6 @@ ipcMain.handle('login', async (event, credentials) => {
 
 ipcMain.handle('logout', async () => {
     try {
-        const loginPath = path.join(__dirname, 'src', 'views', 'login.html');
-        console.log('Attempting to logout, loading:', loginPath);
-
-        if (!verifyFileExists(loginPath)) {
-            throw new Error('Login file not found');
-        }
-
-        if (mainWindow) {
-            await mainWindow.loadFile(loginPath);
-            console.log('Successfully logged out');
-        }
         return { success: true };
     } catch (error) {
         console.error('Logout error:', error);
@@ -149,17 +92,7 @@ ipcMain.handle('logout', async () => {
     }
 });
 
-const registeredHandlers = new Set();
-
-function registerIpcHandler(channel, handler) {
-    if (!registeredHandlers.has(channel)) {
-        ipcMain.handle(channel, handler);
-        registeredHandlers.add(channel);
-    }
-}
-
-// Now register your handlers using this function
-registerIpcHandler('add-book', async (event, bookData) => {
+ipcMain.handle('add-book', async (event, bookData) => {
     try {
         const result = await db.run(
             'INSERT INTO books (title, author, isbn, price, stock_quantity, publisher) VALUES (?, ?, ?, ?, ?, ?)',
@@ -172,8 +105,7 @@ registerIpcHandler('add-book', async (event, bookData) => {
     }
 });
 
-// Register other handlers similarly
-registerIpcHandler('get-inventory', async () => {
+ipcMain.handle('get-inventory', async () => {
     try {
         const books = await db.all('SELECT * FROM books ORDER BY title');
         return books;
@@ -181,31 +113,6 @@ registerIpcHandler('get-inventory', async () => {
         console.error('Database error:', error);
         throw error;
     }
-});
-
-function createAddBookWindow() {
-    const addBookWindow = new BrowserWindow({
-        width: 600,
-        height: 800,
-        parent: mainWindow, // Makes it modal
-        modal: true,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
-        }
-    });
-
-    addBookWindow.loadFile(path.join(__dirname, 'src', 'views', 'add-book.html'));
-    addBookWindow.setMenu(null);
-}
-
-// Add these IPC handlers
-ipcMain.handle('open-add-book-window', () => {
-    createAddBookWindow();
-});
-
-ipcMain.on('refresh-inventory', () => {
-    mainWindow.webContents.send('refresh-inventory');
 });
 
 // Window management
@@ -221,150 +128,10 @@ app.on('activate', () => {
     }
 });
 
-// Handle any uncaught errors
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-});
-
 // Make sure to close the database connection when the app quits
 app.on('will-quit', async () => {
     if (db) {
         await db.close();
         console.log('Database connection closed');
-    }
-});
-
-// Add these IPC handlers
-
-ipcMain.handle('get-dashboard-stats', async () => {
-    try {
-        const [totalBooks] = await db.get('SELECT COUNT(*) as count FROM books');
-        const [lowStockCount] = await db.get('SELECT COUNT(*) as count FROM books WHERE stock_quantity < 10');
-        const [todaySales] = await db.get(`
-            SELECT COALESCE(SUM(total_amount), 0) as total 
-            FROM sales 
-            WHERE DATE(timestamp) = DATE('now')
-        `);
-
-        return {
-            totalBooks: totalBooks.count,
-            lowStockCount: lowStockCount.count,
-            todaySales: todaySales.total || 0
-        };
-    } catch (error) {
-        console.error('Error getting dashboard stats:', error);
-        throw error;
-    }
-});
-
-ipcMain.handle('get-recent-activities', async () => {
-    try {
-        const activities = await db.all(`
-            SELECT * FROM activities 
-            ORDER BY timestamp DESC 
-            LIMIT 5
-        `);
-        return activities;
-    } catch (error) {
-        console.error('Error getting recent activities:', error);
-        throw error;
-    }
-});
-
-ipcMain.handle('backup-database', async () => {
-    try {
-        const backupPath = path.join(app.getPath('userData'), `backup-${Date.now()}.sqlite`);
-        await fs.copyFile(dbPath, backupPath);
-        return { success: true, path: backupPath };
-    } catch (error) {
-        console.error('Backup failed:', error);
-        return { success: false, error: error.message };
-    }
-});
-
-ipcMain.handle('restore-database', async (event, backupPath) => {
-    try {
-        await db.close(); // Close current connection
-        await fs.copyFile(backupPath, dbPath);
-        // Reinitialize database connection
-        await initializeDatabase();
-        return { success: true };
-    } catch (error) {
-        console.error('Restore failed:', error);
-        return { success: false, error: error.message };
-    }
-});
-
-ipcMain.handle('restart-app', () => {
-    app.relaunch();
-    app.exit();
-});
-
-ipcMain.handle('get-sales-overview', async () => {
-    try {
-        const [totalSales] = await db.get('SELECT COALESCE(SUM(total_amount), 0) as total FROM sales');
-        const [totalItemsSold] = await db.get('SELECT COALESCE(SUM(quantity), 0) as total FROM sales');
-        const [totalTransactions] = await db.get('SELECT COUNT(*) as count FROM sales');
-
-        return {
-            totalSales: totalSales.total || 0,
-            totalItemsSold: totalItemsSold.total || 0,
-            totalTransactions: totalTransactions.count
-        };
-    } catch (error) {
-        console.error('Error getting sales overview:', error);
-        throw error;
-    }
-});
-
-ipcMain.handle('get-recent-transactions', async () => {
-    try {
-        const transactions = await db.all(`
-            SELECT * FROM sales 
-            ORDER BY date DESC 
-            LIMIT 5
-        `);
-        return transactions;
-    } catch (error) {
-        console.error('Error getting recent transactions:', error);
-        throw error;
-    }
-});
-
-ipcMain.handle('get-sales-data', async () => {
-    try {
-        const salesData = await db.all(`
-            SELECT DATE(date) as date, SUM(total_amount) as total 
-            FROM sales 
-            GROUP BY DATE(date)
-            ORDER BY DATE(date)
-        `);
-        return {
-            labels: salesData.map(data => data.date),
-            sales: salesData.map(data => data.total)
-        };
-    } catch (error) {
-        console.error('Error getting sales data:', error);
-        throw error;
-    }
-});
-
-ipcMain.handle('get-available-books', async () => {
-    try {
-        const books = await db.all('SELECT * FROM books WHERE stock_quantity > 0');
-        return books;
-    } catch (error) {
-        console.error('Error getting available books:', error);
-        throw error;
-    }
-});
-
-ipcMain.handle('get-book-details', async (event, bookId) => {
-    try {
-        const book = await db.get('SELECT * FROM books WHERE id = ?', bookId);
-        return book;
-    } catch (error) {
-        console.error('Error getting book details:', error);
-        throw error;
     }
 });
