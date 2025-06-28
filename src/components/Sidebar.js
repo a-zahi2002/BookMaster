@@ -21,8 +21,8 @@ const Sidebar = ({ activeView, onViewChange, userRole }) => {
   };
 
   const menuItems = [
-    { id: 'pos', label: 'Point of Sale', icon: ShoppingCart, roles: ['manager', 'cashier'] },
     { id: 'inventory', label: 'Inventory', icon: Package, roles: ['admin', 'manager'] },
+    { id: 'pos', label: 'Point of Sale', icon: ShoppingCart, roles: ['manager', 'cashier'] },
     { id: 'reports', label: 'Reports', icon: BarChart3, roles: ['admin', 'manager'] },
     { id: 'settings', label: 'Settings', icon: Settings, roles: ['admin'] }
   ];
