@@ -21,7 +21,8 @@
     "react-scripts": "5.0.1",
     "lucide-react": "^0.263.1",
     "sqlite3": "^5.1.7",
-    "electron": "^28.1.0"
+    "electron": "^28.1.0",
+    "recharts": "^2.8.0"
   },
   "devDependencies": {
     "concurrently": "^7.6.0",
