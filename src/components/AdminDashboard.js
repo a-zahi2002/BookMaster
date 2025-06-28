@@ -56,11 +56,11 @@ const AdminDashboard = () => {
                 <p className="text-sm text-gray-600 mt-1">Inventory worth</p>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-gray-500 text-sm font-medium">Today's Sales</h3>
+                <h3 className="text-gray-500 text-sm font-medium">System Status</h3>
                 <div className="flex items-center mt-2">
-                  <span className="text-3xl font-bold text-blue-600">LKR 45,230</span>
+                  <span className="text-3xl font-bold text-blue-600">Active</span>
                 </div>
-                <p className="text-sm text-green-600 mt-1">+12% from yesterday</p>
+                <p className="text-sm text-green-600 mt-1">All systems operational</p>
               </div>
             </div>
 
@@ -92,33 +92,33 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Recent Activity */}
+            {/* System Overview */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+              <h3 className="text-lg font-semibold mb-4">System Overview</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-green-600 text-sm">💰</span>
+                      <span className="text-green-600 text-sm">✓</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Sale completed</p>
-                      <p className="text-xs text-gray-500">The Great Gatsby - LKR 1,500</p>
+                      <p className="text-sm font-medium">Database Status</p>
+                      <p className="text-xs text-gray-500">Connected and operational</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">2 min ago</span>
+                  <span className="text-xs text-gray-400">Online</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-blue-600 text-sm">📚</span>
+                      <span className="text-blue-600 text-sm">📊</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">New book added</p>
-                      <p className="text-xs text-gray-500">1984 by George Orwell</p>
+                      <p className="text-sm font-medium">Analytics Engine</p>
+                      <p className="text-xs text-gray-500">Processing sales data</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">15 min ago</span>
+                  <span className="text-xs text-gray-400">Active</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
@@ -126,11 +126,11 @@ const AdminDashboard = () => {
                       <span className="text-yellow-600 text-sm">⚠️</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Low stock alert</p>
-                      <p className="text-xs text-gray-500">To Kill a Mockingbird - 3 remaining</p>
+                      <p className="text-sm font-medium">Backup Status</p>
+                      <p className="text-xs text-gray-500">Last backup: 2 hours ago</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">1 hour ago</span>
+                  <span className="text-xs text-gray-400">Scheduled</span>
                 </div>
               </div>
             </div>
