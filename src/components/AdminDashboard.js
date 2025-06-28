@@ -9,7 +9,7 @@ import ReportsView from './Analytics/ReportsView';
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const { books, getBooks } = useData();
-  const [activeSection, setActiveSection] = useState('home');
+  const [activeSection, setActiveSection] = useState('inventory'); // Changed from 'home' to 'inventory'
   const [showAddBookModal, setShowAddBookModal] = useState(false);
 
   useEffect(() => {
