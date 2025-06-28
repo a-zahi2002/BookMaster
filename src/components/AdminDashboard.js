@@ -11,19 +11,19 @@ import ReportsView from './Analytics/ReportsView';
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const { books, getBooks } = useData();
-  const [activeSection, setActiveSection] = useState('inventory'); // Changed default to inventory
+  const [activeSection, setActiveSection] = useState('home');
 
   useEffect(() => {
     getBooks();
   }, []);
 
   const sidebarItems = [
+    { id: 'home', label: 'System Overview', icon: '🏠' },
     { id: 'inventory', label: 'Inventory Management', icon: '📚' },
     { id: 'users', label: 'User Management', icon: '👥' },
     { id: 'backup', label: 'Backup & Cloud', icon: '☁️' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'reports', label: 'Reports & Export', icon: '📋' },
-    { id: 'home', label: 'System Overview', icon: '🏠' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -46,7 +46,7 @@ const AdminDashboard = () => {
 
       case 'home':
         return (
-          <div className="space-y-6">
+          <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-gray-500 text-sm font-medium">System Status</h3>
@@ -118,38 +118,40 @@ const AdminDashboard = () => {
 
       case 'settings':
         return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">System Settings</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-medium mb-3">General Settings</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Email Notifications</span>
-                    <input type="checkbox" className="rounded" defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Low Stock Alerts</span>
-                    <input type="checkbox" className="rounded" defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Auto Backup</span>
-                    <input type="checkbox" className="rounded" />
+          <div className="p-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">System Settings</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-3">General Settings</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Email Notifications</span>
+                      <input type="checkbox" className="rounded" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Low Stock Alerts</span>
+                      <input type="checkbox" className="rounded" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Auto Backup</span>
+                      <input type="checkbox" className="rounded" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div>
-                <h4 className="font-medium mb-3">Data Management</h4>
-                <div className="space-y-3">
-                  <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
-                    Backup Database
-                  </button>
-                  <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                    Export All Data
-                  </button>
-                  <button className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm">
-                    System Maintenance
-                  </button>
+                <div>
+                  <h4 className="font-medium mb-3">Data Management</h4>
+                  <div className="space-y-3">
+                    <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                      Backup Database
+                    </button>
+                    <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                      Export All Data
+                    </button>
+                    <button className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm">
+                      System Maintenance
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

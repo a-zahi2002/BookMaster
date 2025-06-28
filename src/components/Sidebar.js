@@ -8,29 +8,39 @@ import {
   Settings, 
   LogOut, 
   BookOpen,
-  User
+  User,
+  Users,
+  Cloud,
+  Home,
+  FileText
 } from 'lucide-react';
 
-const Sidebar = ({ activeView, onViewChange, userRole }) => {
-  const { user, logout } = useAuth();
+const Sidebar = ({ items, activeSection, onSectionChange, title, user, onLogout }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
+    await onLogout();
     navigate('/login');
   };
 
-  const menuItems = [
-    { id: 'inventory', label: 'Inventory', icon: Package, roles: ['admin', 'manager'] },
-    { id: 'pos', label: 'Point of Sale', icon: ShoppingCart, roles: ['manager', 'cashier'] },
-    { id: 'reports', label: 'Reports', icon: BarChart3, roles: ['admin', 'manager'] },
-    { id: 'settings', label: 'Settings', icon: Settings, roles: ['admin'] }
-  ];
-
-  const filteredItems = menuItems.filter(item => item.roles.includes(userRole));
+  const getIcon = (iconName) => {
+    const iconMap = {
+      '🏠': Home,
+      '📚': Package,
+      '👥': Users,
+      '☁️': Cloud,
+      '📊': BarChart3,
+      '📋': FileText,
+      '⚙️': Settings,
+      '💰': ShoppingCart
+    };
+    
+    const IconComponent = iconMap[iconName] || Package;
+    return <IconComponent className="h-5 w-5" />;
+  };
 
   return (
-    <div className="w-64 bg-white shadow-lg flex flex-col">
+    <div className="w-64 bg-white shadow-lg flex flex-col h-full">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -39,7 +49,7 @@ const Sidebar = ({ activeView, onViewChange, userRole }) => {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">BookMaster</h1>
-            <p className="text-sm text-gray-500">POS System</p>
+            <p className="text-sm text-gray-500">{title}</p>
           </div>
         </div>
       </div>
@@ -60,24 +70,21 @@ const Sidebar = ({ activeView, onViewChange, userRole }) => {
       {/* Navigation */}
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
-          {filteredItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.id}>
-                <button
-                  onClick={() => onViewChange(item.id)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    activeView === item.id
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-sm font-medium">{item.label}</span>
-                </button>
-              </li>
-            );
-          })}
+          {items.map((item) => (
+            <li key={item.id}>
+              <button
+                onClick={() => onSectionChange(item.id)}
+                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                  activeSection === item.id
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {getIcon(item.icon)}
+                <span className="text-sm font-medium">{item.label}</span>
+              </button>
+            </li>
+          ))}
         </ul>
       </nav>
 
