@@ -115,7 +115,7 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Analytics Engine</p>
-                      <p className="text-xs text-gray-500">Processing sales data</p>
+                      <p className="text-xs text-gray-500">Processing inventory data</p>
                     </div>
                   </div>
                   <span className="text-xs text-gray-400">Active</span>
@@ -251,8 +251,8 @@ const AdminDashboard = () => {
         title="Admin Panel"
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="h-16 bg-white shadow-sm flex items-center justify-between px-6">
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="h-16 bg-white shadow-sm flex items-center justify-between px-6 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-800">
             {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
           </h2>
@@ -268,7 +268,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {renderContent()}
         </div>
       </div>
