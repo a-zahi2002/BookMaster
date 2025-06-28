@@ -9,7 +9,7 @@ import ReportsView from './Analytics/ReportsView';
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const { books, getBooks } = useData();
-  const [activeSection, setActiveSection] = useState('inventory'); // Changed from 'home' to 'inventory'
+  const [activeSection, setActiveSection] = useState('inventory');
   const [showAddBookModal, setShowAddBookModal] = useState(false);
 
   useEffect(() => {
@@ -142,8 +142,8 @@ const AdminDashboard = () => {
 
       case 'inventory':
         return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-lg shadow">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Inventory Management</h3>
               <button
                 onClick={() => setShowAddBookModal(true)}
@@ -152,9 +152,9 @@ const AdminDashboard = () => {
                 Add New Book
               </button>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-96">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
@@ -241,7 +241,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="h-screen flex bg-gray-50 overflow-hidden">
       <Sidebar
         items={sidebarItems}
         activeSection={activeSection}
@@ -251,7 +251,7 @@ const AdminDashboard = () => {
         title="Admin Panel"
       />
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-w-0">
         <div className="h-16 bg-white shadow-sm flex items-center justify-between px-6 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-800">
             {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}

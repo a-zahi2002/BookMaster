@@ -30,10 +30,10 @@ const POSView = () => {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="h-full flex overflow-hidden">
       {/* Products Section */}
-      <div className="flex-1 p-6">
-        <div className="mb-6">
+      <div className="flex-1 flex flex-col p-6 min-w-0">
+        <div className="mb-6 flex-shrink-0">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Point of Sale</h1>
           
           {/* Search */}
@@ -50,37 +50,39 @@ const POSView = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredBooks.map((book) => (
-            <div key={book.id} className="card hover:shadow-md transition-shadow">
-              <div className="card-content p-4">
-                <h3 className="font-semibold text-gray-900 mb-1">{book.title}</h3>
-                <p className="text-sm text-gray-600 mb-2">by {book.author}</p>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-lg font-bold text-blue-600">
-                    LKR {book.price.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    Stock: {book.stock_quantity}
-                  </span>
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredBooks.map((book) => (
+              <div key={book.id} className="card hover:shadow-md transition-shadow">
+                <div className="card-content p-4">
+                  <h3 className="font-semibold text-gray-900 mb-1">{book.title}</h3>
+                  <p className="text-sm text-gray-600 mb-2">by {book.author}</p>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-lg font-bold text-blue-600">
+                      LKR {book.price.toLocaleString()}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      Stock: {book.stock_quantity}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => addToCart(book.id)}
+                    disabled={book.stock_quantity === 0}
+                    className="btn-primary w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </button>
                 </div>
-                <button
-                  onClick={() => addToCart(book.id)}
-                  disabled={book.stock_quantity === 0}
-                  className="btn-primary w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add to Cart
-                </button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Cart Section */}
       <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center space-x-2">
             <ShoppingCart className="h-5 w-5 text-gray-600" />
             <h2 className="text-lg font-semibold text-gray-900">Cart ({cart.length})</h2>
@@ -137,7 +139,7 @@ const POSView = () => {
         </div>
 
         {cart.length > 0 && (
-          <div className="border-t border-gray-200 p-4 space-y-4">
+          <div className="border-t border-gray-200 p-4 space-y-4 flex-shrink-0">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold">Total:</span>
               <span className="text-xl font-bold text-blue-600">

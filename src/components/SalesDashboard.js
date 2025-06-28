@@ -24,8 +24,8 @@ const SalesDashboard = () => {
     switch (activeSection) {
       case 'pos':
         return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex justify-between items-center mb-6">
+          <div className="bg-white rounded-lg shadow">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Available Books</h3>
               <button
                 onClick={() => setShowCart(true)}
@@ -34,9 +34,9 @@ const SalesDashboard = () => {
                 Cart ({cart.length})
               </button>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-96">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead>
+                <thead className="bg-gray-50 sticky top-0">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
@@ -44,7 +44,7 @@ const SalesDashboard = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {books.filter(book => book.stock_quantity > 0).map((book) => (
                     <tr key={book.id}>
                       <td className="px-6 py-4 whitespace-nowrap">{book.title}</td>
@@ -70,7 +70,7 @@ const SalesDashboard = () => {
         return (
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4">All Books</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto">
               {books.map((book) => (
                 <div key={book.id} className="book-card">
                   <h3>{book.title}</h3>
@@ -103,7 +103,7 @@ const SalesDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="h-screen flex bg-gray-50 overflow-hidden">
       <Sidebar
         items={sidebarItems}
         activeSection={activeSection}
@@ -113,8 +113,8 @@ const SalesDashboard = () => {
         title="Sales Panel"
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="h-16 bg-white shadow-sm flex items-center justify-between px-6">
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="h-16 bg-white shadow-sm flex items-center justify-between px-6 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-800">
             {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
           </h2>
@@ -126,7 +126,7 @@ const SalesDashboard = () => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {renderContent()}
         </div>
       </div>
