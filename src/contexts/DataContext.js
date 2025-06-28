@@ -61,14 +61,40 @@ export const DataProvider = ({ children }) => {
       price: 1400,
       stock_quantity: 15,
       publisher: "Little, Brown and Company"
+    },
+    {
+      id: 6,
+      title: "Lord of the Flies",
+      author: "William Golding",
+      isbn: "978-0-571-05686-2",
+      price: 1250,
+      stock_quantity: 8,
+      publisher: "Faber & Faber"
+    },
+    {
+      id: 7,
+      title: "Jane Eyre",
+      author: "Charlotte Brontë",
+      isbn: "978-0-14-144114-6",
+      price: 1300,
+      stock_quantity: 12,
+      publisher: "Penguin Classics"
+    },
+    {
+      id: 8,
+      title: "The Hobbit",
+      author: "J.R.R. Tolkien",
+      isbn: "978-0-547-92822-7",
+      price: 1600,
+      stock_quantity: 35,
+      publisher: "Houghton Mifflin Harcourt"
     }
   ];
 
   const getBooks = async () => {
     try {
-      if (isElectron) {
-        const { ipcRenderer } = window.require('electron');
-        const booksData = await ipcRenderer.invoke('get-inventory');
+      if (isElectron && window.electronAPI) {
+        const booksData = await window.electronAPI.getInventory();
         setBooks(booksData);
         return booksData;
       } else {
@@ -84,9 +110,8 @@ export const DataProvider = ({ children }) => {
 
   const addBook = async (bookData) => {
     try {
-      if (isElectron) {
-        const { ipcRenderer } = window.require('electron');
-        const result = await ipcRenderer.invoke('add-book', bookData);
+      if (isElectron && window.electronAPI) {
+        const result = await window.electronAPI.addBook(bookData);
         if (result.success) {
           await getBooks();
         }
@@ -107,9 +132,8 @@ export const DataProvider = ({ children }) => {
 
   const updateBook = async (id, bookData) => {
     try {
-      if (isElectron) {
-        const { ipcRenderer } = window.require('electron');
-        const result = await ipcRenderer.invoke('update-book', id, bookData);
+      if (isElectron && window.electronAPI) {
+        const result = await window.electronAPI.updateBook(id, bookData);
         if (result.success) {
           await getBooks();
         }
@@ -128,9 +152,8 @@ export const DataProvider = ({ children }) => {
 
   const deleteBook = async (id) => {
     try {
-      if (isElectron) {
-        const { ipcRenderer } = window.require('electron');
-        const result = await ipcRenderer.invoke('delete-book', id);
+      if (isElectron && window.electronAPI) {
+        const result = await window.electronAPI.deleteBook(id);
         if (result.success) {
           await getBooks();
         }
@@ -150,11 +173,14 @@ export const DataProvider = ({ children }) => {
     if (book && book.stock_quantity >= quantity) {
       const existingItem = cart.find(item => item.bookId === bookId);
       if (existingItem) {
-        setCart(prev => prev.map(item => 
-          item.bookId === bookId 
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        ));
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity <= book.stock_quantity) {
+          setCart(prev => prev.map(item => 
+            item.bookId === bookId 
+              ? { ...item, quantity: newQuantity }
+              : item
+          ));
+        }
       } else {
         setCart(prev => [...prev, {
           bookId: book.id,
@@ -171,11 +197,14 @@ export const DataProvider = ({ children }) => {
     if (quantity <= 0) {
       removeFromCart(bookId);
     } else {
-      setCart(prev => prev.map(item => 
-        item.bookId === bookId 
-          ? { ...item, quantity }
-          : item
-      ));
+      const book = books.find(b => b.id === bookId);
+      if (book && quantity <= book.stock_quantity) {
+        setCart(prev => prev.map(item => 
+          item.bookId === bookId 
+            ? { ...item, quantity }
+            : item
+        ));
+      }
     }
   };
 

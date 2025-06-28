@@ -1,51 +1,28 @@
 import React from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
 
 const SalesChart = ({ data, title = "Sales Overview" }) => {
-  const formatCurrency = (value) => `LKR ${value.toLocaleString()}`;
-
+  // Simple chart implementation without recharts dependency
+  const maxValue = Math.max(...data.map(item => item.sales));
+  
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
-              tick={{ fontSize: 12 }}
-              angle={-45}
-              textAnchor="end"
-              height={60}
+      <div className="h-80 flex items-end space-x-2">
+        {data.map((item, index) => (
+          <div key={index} className="flex-1 flex flex-col items-center">
+            <div 
+              className="w-full bg-blue-500 rounded-t"
+              style={{ 
+                height: `${(item.sales / maxValue) * 100}%`,
+                minHeight: '4px'
+              }}
             />
-            <YAxis 
-              tick={{ fontSize: 12 }}
-              tickFormatter={formatCurrency}
-            />
-            <Tooltip 
-              formatter={(value) => [formatCurrency(value), 'Sales']}
-              labelStyle={{ color: '#374151' }}
-            />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="sales" 
-              stroke="#2563eb" 
-              strokeWidth={2}
-              dot={{ fill: '#2563eb', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, stroke: '#2563eb', strokeWidth: 2 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+            <div className="text-xs text-gray-600 mt-2 text-center">
+              <div>{item.date}</div>
+              <div className="font-semibold">LKR {item.sales.toLocaleString()}</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

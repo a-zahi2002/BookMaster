@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import AdminDashboard from '../components/AdminDashboard';
 import ManagerDashboard from '../components/ManagerDashboard';
-import SalesDashboard from '../components/SalesDashboard';
+import CashierDashboard from '../components/CashierDashboard';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -22,9 +22,9 @@ const Dashboard = () => {
         return <ManagerDashboard />;
       case 'cashier':
       case 'user':
-        return <SalesDashboard />;
+        return <CashierDashboard />;
       default:
-        return <SalesDashboard />;
+        return <CashierDashboard />;
     }
   };
 
