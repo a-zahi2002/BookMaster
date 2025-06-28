@@ -7,7 +7,7 @@ BookMaster is a comprehensive Point of Sale (POS) system designed for bookstores
 ### 1. Google Drive Integration for Automatic Backups
 - **Automatic cloud backups** when connected to the internet
 - **OAuth integration** with Google Drive
-- **Smart backup management** - updates existing files instead of creating duplicates
+- **Smart  dont see the options on side of any of the  management** - updates existing files instead of creating duplicates
 - **Offline backup queue** - automatically uploads when connection is restored
 - **Role-based permissions** - Managers can create backups, only Admins can delete
 
