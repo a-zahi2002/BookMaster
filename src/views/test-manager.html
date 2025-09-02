@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Test Manager Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Test Manager Dashboard</h1>
+    <button onclick="testEditBook(1)">Test Edit Book</button>
+    <button onclick="testDeleteBook(1)">Test Delete Book</button>
+    <button onclick="testDisplayBooks()">Test Display Books</button>
+    
+    <div id="testOutput"></div>
+
+    <script src="manager-dashboard.js"></script>
+    <script>
+        function testEditBook(id) {
+            console.log('Testing editBook with ID:', id);
+            editBook(id);
+        }
+        
+        function testDeleteBook(id) {
+            console.log('Testing deleteBook with ID:', id);
+            deleteBook(id);
+        }
+        
+        function testDisplayBooks() {
+            console.log('Testing displayBooks');
+            displayBooks();
+        }
+        
+        // Initialize after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page loaded');
+            loadBooks();
+            console.log('Books loaded:', books);
+        });
+    </script>
+</body>
+</html> 

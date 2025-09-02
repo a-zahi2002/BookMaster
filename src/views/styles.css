@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.book-card {
+    @apply bg-white rounded-lg shadow-sm p-6 transition-shadow hover:shadow-md;
+}
+
+.book-card h3 {
+    @apply text-lg font-semibold text-gray-800 mb-2;
+}
+
+.book-card p {
+    @apply text-gray-600 text-sm mb-1;
+}
+
+.book-card button {
+    @apply mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.cart-item {
+    @apply flex justify-between items-center p-3 bg-gray-50 rounded-lg;
+}
+
+.cart-item-title {
+    @apply text-sm font-medium text-gray-800;
+}
+
+.cart-item-price {
+    @apply text-sm text-gray-600;
+}
+
+html,
+:host {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* rest of the properties... */
+}

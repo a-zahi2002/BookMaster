@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Dashboard - Bookstore POS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="styles.output.css" rel="stylesheet">
+    <!-- Add Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-lg">
+            <div class="p-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Admin Panel</h1>
+                <p class="text-sm text-gray-600" id="adminName"></p>
+            </div>
+            <nav class="mt-6">
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="home">
+                    <span>Home</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="inventory">
+                    <span>Inventory Management</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="reports">
+                    <span>Reports & Analytics</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100" data-section="settings">
+                    <span>Settings</span>
+                </a>
+                <a href="#" class="flex items-center px-6 py-3 text-red-600 hover:bg-red-50" id="logoutBtn">
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <div class="h-16 bg-white shadow-sm flex items-center justify-between px-6">
+                <h2 class="text-xl font-semibold text-gray-800" id="sectionTitle">Dashboard</h2>
+                <div class="flex items-center space-x-4">
+                    <span id="currentTime" class="text-gray-600"></span>
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="flex-1 overflow-auto p-6">
+                <!-- Home Section -->
+                <div id="homeSection" class="section">
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-gray-500 text-sm font-medium">Total Sales (Today)</h3>
+                            <div class="flex items-center mt-2">
+                                <span class="text-3xl font-bold text-gray-800" id="todaySales">LKR 0</span>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-gray-500 text-sm font-medium">Books in Stock</h3>
+                            <div class="flex items-center mt-2">
+                                <span class="text-3xl font-bold text-gray-800" id="totalBooks">0</span>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-gray-500 text-sm font-medium">Low Stock Items</h3>
+                            <div class="flex items-center mt-2">
+                                <span class="text-3xl font-bold text-red-600" id="lowStockCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Sales Overview</h3>
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Top Selling Books</h3>
+                            <canvas id="topBooksChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Section -->
+                <div id="inventorySection" class="section hidden">
+                    <div class="bg-white rounded-lg shadow p-6 relative z-0">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold">Inventory Management</h3>
+                            <button 
+                                onclick="showAddBookModal()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                Add New Book
+                            </button>
+                        </div>
+                        <div class="inventory-table-container overflow-x-auto relative">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="booksList" class="bg-white divide-y divide-gray-200">
+                                    <!-- Book rows will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add Book Modal -->
+                    <div id="addBookModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                        <!-- Background overlay -->
+                        <div class="fixed inset-0 bg-white"></div>
+
+                        <!-- Modal content -->
+                        <div class="relative h-full">
+                            <div class="h-full p-6">
+                                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                                    <h3 class="text-2xl font-semibold text-gray-800">Add New Book</h3>
+                                    <button onclick="closeAddBookModal()" 
+                                        class="text-gray-500 hover:text-gray-700 p-2"
+                                        title="Close modal"
+                                        aria-label="Close add book modal">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                        <span class="sr-only">Close</span>
+                                    </button>
+                                </div>
+                                
+                                <form id="addBookForm" class="space-y-6 max-w-4xl mx-auto">
+                                    <div>
+                                        <label for="title" class="block text-sm font-semibold text-gray-700">Book Title</label>
+                                        <input type="text" id="title" name="title" required
+                                            class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700">
+                                    </div>
+
+                                    <div>
+                                        <label for="author" class="block text-sm font-semibold text-gray-700">Author Name</label>
+                                        <input type="text" id="author" name="author" required
+                                            class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700">
+                                    </div>
+
+                                    <div>
+                                        <label for="isbn" class="block text-sm font-semibold text-gray-700">ISBN Number</label>
+                                        <input type="text" id="isbn" name="isbn" required
+                                            class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700">
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="price" class="block text-sm font-semibold text-gray-700">Price (LKR)</label>
+                                            <div class="mt-1 relative rounded-lg shadow-sm">
+                                                <input type="number" id="price" name="price" step="0.01" required
+                                                    class="block w-full px-4 py-3 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-700">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label for="stock" class="block text-sm font-semibold text-gray-700">Stock Quantity</label>
+                                            <input type="number" id="stock" name="stock" required
+                                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label for="publisher" class="block text-sm font-semibold text-gray-700">Publisher</label>
+                                        <input type="text" id="publisher" name="publisher" required
+                                            class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700">
+                                    </div>
+
+                                    <div class="pt-6 flex space-x-4">
+                                        <button type="button" onclick="closeAddBookModal()" 
+                                            class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 font-medium transition-colors">
+                                            Cancel
+                                        </button>
+                                        <button type="submit" data-action="save-close"
+                                            class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium transition-colors">
+                                            Save & Close
+                                        </button>
+                                        <button type="submit" data-action="save-next"
+                                            class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 font-medium transition-colors">
+                                            Save & Next
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reportsSection" class="section hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold">Reports & Analytics</h3>
+                            <button id="downloadPdfBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                Download PDF
+                            </button>
+                        </div>
+
+                        <!-- Report Filters -->
+                        <div class="mb-6">
+                            <form id="reportFilterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <!-- Start Date -->
+                                <div>
+                                    <label for="reportStartDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+                                    <input type="date" id="reportStartDate" name="startDate" required
+                                        aria-label="Start Date" title="Select start date"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+
+                                <!-- End Date -->
+                                <div>
+                                    <label for="reportEndDate" class="block text-sm font-medium text-gray-700">End Date</label>
+                                    <input type="date" id="reportEndDate" name="endDate" required
+                                        aria-label="End Date" title="Select end date"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+
+                                <!-- Filter Type -->
+                                <div>
+                                    <label for="reportFilterType" class="block text-sm font-medium text-gray-700">Filter Type</label>
+                                    <select id="reportFilterType" name="filterType" aria-label="Report filter type"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="all">All Sales</option>
+                                        <option value="book">By Book</option>
+                                        <option value="category">By Category</option>
+                                    </select>
+                                </div>
+
+                                <div class="flex items-end">
+                                    <button type="submit" 
+                                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                        Generate Report
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Report Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Book Title</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Report data will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settingsSection" class="section hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-8">
+                            <h3 class="text-xl font-semibold text-gray-800">Settings</h3>
+                        </div>
+
+                        <!-- Settings Grid Layout -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Left Column - System Settings -->
+                            <div class="space-y-8">
+                                <div class="border border-gray-100 rounded-lg p-6">
+                                    <h4 class="text-lg font-medium text-blue-600 mb-6">System Preferences</h4>
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="inline-flex items-center">
+                                                <input type="checkbox" class="form-checkbox rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                <span class="ml-3 text-gray-700">Enable email notifications</span>
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label class="inline-flex items-center">
+                                                <input type="checkbox" class="form-checkbox rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                <span class="ml-3 text-gray-700">Enable low stock alerts</span>
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label for="lowStockThreshold" class="block text-sm font-medium text-gray-700 mb-2">Low Stock Threshold</label>
+                                            <input type="number" min="0" id="lowStockThreshold"
+                                                aria-label="Low Stock Threshold"
+                                                title="Set minimum stock level for alerts"
+                                                placeholder="Enter minimum stock level"
+                                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="currencyDisplay" class="block text-sm font-medium text-gray-700 mb-2">Currency Display</label>
+                                            <select id="currencyDisplay"
+                                                aria-label="Currency Display"
+                                                title="Select display currency"
+                                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                <option value="LKR">LKR</option>
+                                                <option value="USD">USD</option>
+                                                <option value="EUR">EUR</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column - Backup & Restore -->
+                            <div class="space-y-8">
+                                <div class="border border-gray-100 rounded-lg p-6">
+                                    <h4 class="text-lg font-medium text-blue-600 mb-6">Backup & Restore</h4>
+                                    <div class="space-y-6">
+                                        <!-- Manual Backup -->
+                                        <div class="pb-6 border-b border-gray-100">
+                                            <h5 class="font-medium text-gray-800 mb-2">Database Backup</h5>
+                                            <p class="text-sm text-gray-600 mb-4">Create a backup of your current database</p>
+                                            <button type="button" id="backupBtn"
+                                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                                Create Backup
+                                            </button>
+                                        </div>
+
+                                        <!-- Restore Backup -->
+                                        <div class="pb-6 border-b border-gray-100">
+                                            <h5 class="font-medium text-gray-800 mb-2">Restore Database</h5>
+                                            <p class="text-sm text-gray-600 mb-4">Select a backup file to restore</p>
+                                            <label for="restoreFile" class="block text-sm font-medium text-gray-700 mb-2">Backup File</label>
+                                            <input type="file" id="restoreFile" accept=".sqlite,.backup"
+                                                aria-label="Select backup file to restore"
+                                                title="Choose a backup file"
+                                                placeholder="No file chosen"
+                                                class="block w-full text-sm text-gray-500 mb-3
+                                                    file:mr-4 file:py-2 file:px-4
+                                                    file:rounded-lg file:border-0
+                                                    file:text-sm file:font-medium
+                                                    file:bg-blue-50 file:text-blue-700
+                                                    hover:file:bg-blue-100">
+                                            <button type="button" id="restoreBtn"
+                                                class="w-full px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                                Restore from Backup
+                                            </button>
+                                        </div>
+
+                                        <!-- Export Data -->
+                                        <div>
+                                            <h5 class="font-medium text-gray-800 mb-2">Export Data</h5>
+                                            <p class="text-sm text-gray-600 mb-4">Export your data in different formats</p>
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <button type="button" id="exportCSV"
+                                                    class="px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                                    Export as CSV
+                                                </button>
+                                                <button type="button" id="exportJSON"
+                                                    class="px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                                    Export as JSON
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Settings Button -->
+                        <div class="mt-8 flex justify-end">
+                            <button type="button" id="saveSettings"
+                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../admin-dashboard.js"></script>
+</body>
+</html> 
