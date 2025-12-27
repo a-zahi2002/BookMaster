@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useData } from '../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
 import {
   Search,
   ShoppingCart,
@@ -16,7 +16,7 @@ import {
   Calculator,
   Scan
 } from 'lucide-react';
-import BookMasterLogo from './BookMasterLogo';
+import BookMasterLogo from '../common/BookMasterLogo';
 
 const CashierDashboard = () => {
   const { user, logout } = useAuth();

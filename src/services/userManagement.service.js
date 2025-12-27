@@ -66,8 +66,9 @@ class UserManagementService {
 
   async createDefaultAdmin() {
     try {
+      // Create default admin user if not exists
       const existingAdmin = await this.db.get(
-        'SELECT id FROM users WHERE role = ? LIMIT 1',
+        'SELECT id FROM users WHERE username = ?',
         ['admin']
       );
 
@@ -80,15 +81,47 @@ class UserManagementService {
         );
         console.log('Default admin user created');
       }
+
+      // Create default manager user if not exists
+      const existingManager = await this.db.get(
+        'SELECT id FROM users WHERE username = ?',
+        ['manager']
+      );
+
+      if (!existingManager) {
+        const hashedPassword = await bcrypt.hash('manager123', 10);
+        await this.db.run(
+          `INSERT INTO users (uuid, username, password, role, name, email) 
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [uuidv4(), 'manager', hashedPassword, 'manager', 'Store Manager', 'manager@bookmaster.com']
+        );
+        console.log('Default manager user created');
+      }
+
+      // Create default cashier user if not exists
+      const existingCashier = await this.db.get(
+        'SELECT id FROM users WHERE username = ?',
+        ['cashier']
+      );
+
+      if (!existingCashier) {
+        const hashedPassword = await bcrypt.hash('cashier123', 10);
+        await this.db.run(
+          `INSERT INTO users (uuid, username, password, role, name, email) 
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [uuidv4(), 'cashier', hashedPassword, 'cashier', 'Cashier User', 'cashier@bookmaster.com']
+        );
+        console.log('Default cashier user created');
+      }
     } catch (error) {
-      console.error('Error creating default admin:', error);
+      console.error('Error creating default users:', error);
     }
   }
 
   async createUser(userData, createdBy) {
     try {
       const { username, password, role, name, email } = userData;
-      
+
       // Check if username already exists
       const existingUser = await this.db.get(
         'SELECT id FROM users WHERE username = ?',
@@ -161,7 +194,7 @@ class UserManagementService {
   async updateUser(userId, updateData, updatedBy) {
     try {
       const { username, role, name, email, is_active } = updateData;
-      
+
       await this.db.run(
         `UPDATE users 
          SET username = ?, role = ?, name = ?, email = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
@@ -182,7 +215,7 @@ class UserManagementService {
   async resetPassword(userId, newPassword, resetBy) {
     try {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      
+
       await this.db.run(
         'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [hashedPassword, userId]
@@ -202,15 +235,15 @@ class UserManagementService {
     try {
       const user = await this.getUserById(userId);
       const newStatus = !user.is_active;
-      
+
       await this.db.run(
         'UPDATE users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [newStatus, userId]
       );
 
       await this.logActivity(
-        toggledBy, 
-        'TOGGLE_USER_STATUS', 
+        toggledBy,
+        'TOGGLE_USER_STATUS',
         `${newStatus ? 'Activated' : 'Deactivated'} user: ${user.username}`
       );
 

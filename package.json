@@ -2,7 +2,7 @@
   "name": "bookmaster-pos",
   "version": "1.0.0",
   "private": true,
-  "main": "main.js",
+  "main": "electron/main.js",
   "homepage": "./",
   "description": "BookMaster POS System",
   "author": "BookMaster Team",
@@ -11,9 +11,9 @@
     "productName": "BookMaster POS",
     "files": [
       "build/**/*",
-      "main.js",
-      "preload.js",
-      "src/**/*",
+      "electron/**/*",
+      "data/**/*",
+      "src/services/**/*",
       "package.json"
     ],
     "directories": {

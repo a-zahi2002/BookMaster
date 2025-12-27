@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { BookOpen, User, Lock, Eye, EyeOff } from 'lucide-react';
-import BookMasterLogo from '../components/BookMasterLogo';
+import BookMasterLogo from '../components/common/BookMasterLogo';
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });

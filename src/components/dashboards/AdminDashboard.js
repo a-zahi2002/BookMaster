@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useData } from '../contexts/DataContext';
-import Sidebar from './Sidebar';
-import EnhancedInventory from './EnhancedInventory';
-import UserManagement from './UserManagement';
-import BackupManagement from './BackupManagement';
-import AnalyticsDashboard from './Analytics/AnalyticsDashboard';
-import ReportsView from './Analytics/ReportsView';
+import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
+import Sidebar from '../common/Sidebar';
+import EnhancedInventory from '../EnhancedInventory';
+import UserManagement from '../UserManagement';
+import BackupManagement from '../BackupManagement';
+import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
+import ReportsView from '../Analytics/ReportsView';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();

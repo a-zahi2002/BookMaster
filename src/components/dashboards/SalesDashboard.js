@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import Sidebar from './Sidebar';
+import Sidebar from '../common/Sidebar';
 import POSView from './POSView';
 import Cart from './Cart';
 

@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { useData } from '../contexts/DataContext';
+import { useData } from '../../contexts/DataContext';
+import { X } from 'lucide-react';
 
-const AddBookModal = ({ onClose, onSuccess }) => {
-  const { addBook } = useData();
+const BookModal = ({ book, onClose }) => {
+  const { addBook, updateBook } = useData();
   const [formData, setFormData] = useState({
-    title: '',
-    author: '',
-    isbn: '',
-    price: '',
-    stock_quantity: '',
-    publisher: ''
+    title: book?.title || '',
+    author: book?.author || '',
+    isbn: book?.isbn || '',
+    price: book?.price || '',
+    stock_quantity: book?.stock_quantity || '',
+    publisher: book?.publisher || ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -31,13 +32,16 @@ const AddBookModal = ({ onClose, onSuccess }) => {
         stock_quantity: parseInt(formData.stock_quantity)
       };
 
-      const result = await addBook(bookData);
-      if (result.success) {
-        onSuccess();
+      if (book) {
+        await updateBook(book.id, bookData);
+      } else {
+        await addBook(bookData);
       }
+
+      onClose();
     } catch (error) {
-      console.error('Error adding book:', error);
-      alert('Failed to add book. Please try again.');
+      console.error('Error saving book:', error);
+      alert('Failed to save book. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -45,21 +49,23 @@ const AddBookModal = ({ onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Add New Book</h3>
+          <h3 className="text-lg font-semibold">
+            {book ? 'Edit Book' : 'Add New Book'}
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
           >
-            ✕
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title
+              Title *
             </label>
             <input
               type="text"
@@ -67,13 +73,14 @@ const AddBookModal = ({ onClose, onSuccess }) => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="input w-full"
+              placeholder="Enter book title"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Author
+              Author *
             </label>
             <input
               type="text"
@@ -81,13 +88,14 @@ const AddBookModal = ({ onClose, onSuccess }) => {
               value={formData.author}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="input w-full"
+              placeholder="Enter author name"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              ISBN
+              ISBN *
             </label>
             <input
               type="text"
@@ -95,44 +103,14 @@ const AddBookModal = ({ onClose, onSuccess }) => {
               value={formData.isbn}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="input w-full"
+              placeholder="Enter ISBN"
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price (LKR)
-              </label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                step="0.01"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stock
-              </label>
-              <input
-                type="number"
-                name="stock_quantity"
-                value={formData.stock_quantity}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Publisher
+              Publisher *
             </label>
             <input
               type="text"
@@ -140,24 +118,60 @@ const AddBookModal = ({ onClose, onSuccess }) => {
               value={formData.publisher}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="input w-full"
+              placeholder="Enter publisher name"
             />
           </div>
 
-          <div className="flex space-x-4 pt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Price (LKR) *
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                required
+                className="input w-full"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stock Quantity *
+              </label>
+              <input
+                type="number"
+                name="stock_quantity"
+                value={formData.stock_quantity}
+                onChange={handleChange}
+                min="0"
+                required
+                className="input w-full"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          <div className="flex space-x-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              className="btn-secondary flex-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary flex-1"
             >
-              {loading ? 'Adding...' : 'Add Book'}
+              {loading ? 'Saving...' : book ? 'Update' : 'Add Book'}
             </button>
           </div>
         </form>
@@ -166,4 +180,4 @@ const AddBookModal = ({ onClose, onSuccess }) => {
   );
 };
 
-export default AddBookModal;
+export default BookModal;

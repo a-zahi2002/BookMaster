@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Search, Edit, Trash2, Package, History, DollarSign } from 'lucide-react';
-import BookModal from './BookModal';
+import BookModal from './modals/BookModal';
 
 const EnhancedInventory = () => {
   const { user } = useAuth();
@@ -56,14 +56,14 @@ const EnhancedInventory = () => {
         ...stockUpdateBook,
         stock_quantity: newQuantity
       });
-      
+
       // Log stock change activity
       await window.electronAPI?.logActivity(
         user.id,
         'STOCK_UPDATE',
         `Updated stock for "${stockUpdateBook.title}" from ${stockUpdateBook.stock_quantity} to ${newQuantity}`
       );
-      
+
       setShowStockModal(false);
       setStockUpdateBook(null);
       setStockQuantity('');
@@ -111,7 +111,7 @@ const EnhancedInventory = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="card">
             <div className="card-content p-4">
               <div className="flex items-center">
@@ -125,7 +125,7 @@ const EnhancedInventory = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="card">
             <div className="card-content p-4">
               <div className="flex items-center">
@@ -233,10 +233,9 @@ const EnhancedInventory = () => {
                     LKR {book.price.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`text-sm font-medium ${
-                      book.stock_quantity < 5 ? 'text-red-600' : 
-                      book.stock_quantity < 10 ? 'text-yellow-600' : 'text-green-600'
-                    }`}>
+                    <span className={`text-sm font-medium ${book.stock_quantity < 5 ? 'text-red-600' :
+                        book.stock_quantity < 10 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
                       {book.stock_quantity}
                     </span>
                   </td>
@@ -244,13 +243,12 @@ const EnhancedInventory = () => {
                     LKR {(book.price * book.stock_quantity).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      book.stock_quantity < 5 
-                        ? 'bg-red-100 text-red-800' 
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${book.stock_quantity < 5
+                        ? 'bg-red-100 text-red-800'
                         : book.stock_quantity < 10
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}>
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-green-100 text-green-800'
+                      }`}>
                       {book.stock_quantity < 5 ? 'Critical' : book.stock_quantity < 10 ? 'Low' : 'Good'}
                     </span>
                   </td>

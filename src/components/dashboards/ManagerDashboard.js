@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useData } from '../contexts/DataContext';
-import Sidebar from './Sidebar';
-import AddBookModal from './AddBookModal';
-import AnalyticsDashboard from './Analytics/AnalyticsDashboard';
-import ReportsView from './Analytics/ReportsView';
+import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
+import Sidebar from '../common/Sidebar';
+import EnhancedInventory from '../EnhancedInventory';
+import AddBookModal from '../modals/AddBookModal';
+import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
+import ReportsView from '../Analytics/ReportsView';
 
 const ManagerDashboard = () => {
   const { user, logout } = useAuth();
@@ -140,59 +141,7 @@ const ManagerDashboard = () => {
         return <AnalyticsDashboard />;
 
       case 'inventory':
-        return (
-          <div className="p-8 max-w-7xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Inventory Catalog</h3>
-                  <p className="text-sm text-gray-500">Manage your book collection</p>
-                </div>
-                <button
-                  onClick={() => setShowAddBookModal(true)}
-                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all font-medium flex items-center"
-                >
-                  <span className="mr-2">+</span> Add New Book
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-100">
-                  <thead className="bg-gray-50/50">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Author</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {books.map((book) => (
-                      <tr key={book.id} className="hover:bg-gray-50/80 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{book.title}</div>
-                          <div className="text-xs text-gray-400">{book.isbn}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{book.author}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${book.stock_quantity > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                            {book.stock_quantity} units
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">LKR {book.price.toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button className="text-indigo-600 hover:text-indigo-900 mr-4 font-medium">Edit</button>
-                          <button className="text-red-600 hover:text-red-900 font-medium">Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        );
+        return <EnhancedInventory />;
 
       case 'reports':
         return <ReportsView />;
