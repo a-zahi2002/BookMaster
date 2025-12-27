@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { BookOpen, User, Lock } from 'lucide-react';
+import BookMasterLogo from '../components/BookMasterLogo';
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -42,8 +43,8 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-            <BookOpen className="h-8 w-8 text-white" />
+          <div className="mx-auto h-20 w-20 bg-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20 overflow-hidden">
+            <BookMasterLogo size="large" />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">BookMaster POS</h2>
           <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
