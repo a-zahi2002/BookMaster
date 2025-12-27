@@ -24,12 +24,12 @@ async function initializeDatabase() {
             driver: sqlite3.Database
         });
         console.log('Connected to SQLite database');
-        
+
         // Initialize services
         userManagementService = new UserManagementService(db);
         backupService = new BackupService(db);
         backupService.setUserManagementService(userManagementService);
-        
+
         // Initialize books table if it doesn't exist
         await db.exec(`
             CREATE TABLE IF NOT EXISTS books (
@@ -45,10 +45,10 @@ async function initializeDatabase() {
             )
         `);
         console.log('Books table initialized');
-        
+
         // Load saved Google Drive tokens
         await googleDriveService.loadSavedTokens();
-        
+
     } catch (error) {
         console.error('Database initialization error:', error);
     }
@@ -58,6 +58,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
+        autoHideMenuBar: true, // Hide the menu bar
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -66,9 +67,12 @@ function createWindow() {
         }
     });
 
+    // Remove the menu bar completely
+    mainWindow.setMenuBarVisibility(false);
+
     // Always load the React app
     const isDev = process.env.NODE_ENV === 'development';
-    
+
     if (isDev) {
         mainWindow.loadURL('http://localhost:3000');
         mainWindow.webContents.openDevTools();
@@ -184,10 +188,10 @@ ipcMain.handle('add-book', async (event, bookData) => {
             'INSERT INTO books (title, author, isbn, price, stock_quantity, publisher) VALUES (?, ?, ?, ?, ?, ?)',
             [bookData.title, bookData.author, bookData.isbn, bookData.price, bookData.stock_quantity, bookData.publisher]
         );
-        
+
         // Log activity
         await userManagementService.logActivity(1, 'ADD_BOOK', `Added book: ${bookData.title}`);
-        
+
         return { success: true, id: result.lastID };
     } catch (error) {
         console.error('Database error:', error);
@@ -209,26 +213,26 @@ ipcMain.handle('update-book', async (event, id, bookData) => {
     try {
         // Get current book data for price change tracking
         const currentBook = await db.get('SELECT * FROM books WHERE id = ?', [id]);
-        
+
         await db.run(
             'UPDATE books SET title = ?, author = ?, isbn = ?, price = ?, stock_quantity = ?, publisher = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [bookData.title, bookData.author, bookData.isbn, bookData.price, bookData.stock_quantity, bookData.publisher, id]
         );
-        
+
         // Track price change if price was modified
         if (currentBook && currentBook.price !== bookData.price) {
             await userManagementService.trackPriceChange(
-                id, 
-                currentBook.price, 
-                bookData.price, 
+                id,
+                currentBook.price,
+                bookData.price,
                 1, // Assuming admin user ID is 1
                 'Price updated via inventory management'
             );
         }
-        
+
         // Log activity
         await userManagementService.logActivity(1, 'UPDATE_BOOK', `Updated book: ${bookData.title}`);
-        
+
         return { success: true };
     } catch (error) {
         console.error('Database error:', error);
@@ -240,10 +244,10 @@ ipcMain.handle('delete-book', async (event, id) => {
     try {
         const book = await db.get('SELECT title FROM books WHERE id = ?', [id]);
         await db.run('DELETE FROM books WHERE id = ?', [id]);
-        
+
         // Log activity
         await userManagementService.logActivity(1, 'DELETE_BOOK', `Deleted book: ${book?.title || 'Unknown'}`);
-        
+
         return { success: true };
     } catch (error) {
         console.error('Database error:', error);
