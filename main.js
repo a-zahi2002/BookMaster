@@ -17,8 +17,10 @@ let backupService;
 // Initialize database connection
 async function initializeDatabase() {
     try {
+        const dbPath = path.join(app.getPath('userData'), 'database.sqlite');
+        console.log('Database path:', dbPath);
         db = await open({
-            filename: 'database.sqlite',
+            filename: dbPath,
             driver: sqlite3.Database
         });
         console.log('Connected to SQLite database');
@@ -324,7 +326,7 @@ ipcMain.handle('get-google-drive-status', async () => {
 
 ipcMain.handle('download-backup', async (event, fileId, fileName) => {
     try {
-        const downloadPath = path.join(__dirname, 'downloads', fileName);
+        const downloadPath = path.join(app.getPath('downloads'), fileName);
         return await googleDriveService.downloadBackup(fileName, downloadPath);
     } catch (error) {
         console.error('Error downloading backup:', error);

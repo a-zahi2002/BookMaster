@@ -1,12 +1,13 @@
 const fs = require('fs').promises;
 const path = require('path');
 const cron = require('node-cron');
+const { app } = require('electron');
 const googleDriveService = require('./googleDrive.service');
 
 class BackupService {
   constructor(db) {
     this.db = db;
-    this.backupDir = path.join(__dirname, '../backups');
+    this.backupDir = path.join(app.getPath('userData'), 'backups');
     this.isOnline = false;
     this.pendingBackups = [];
     this.initializeBackupDirectory();
@@ -27,7 +28,7 @@ class BackupService {
     setInterval(async () => {
       const wasOnline = this.isOnline;
       this.isOnline = await this.checkInternetConnection();
-      
+
       if (!wasOnline && this.isOnline) {
         console.log('Internet connection restored, processing pending backups...');
         await this.processPendingBackups();
@@ -127,7 +128,7 @@ class BackupService {
   async createAutoBackup() {
     try {
       const backup = await this.createLocalBackup('auto');
-      
+
       if (this.isOnline && googleDriveService.getConnectionStatus().isConnected) {
         await this.uploadToGoogleDrive(backup);
       } else {
@@ -145,12 +146,12 @@ class BackupService {
   async createManualBackup(userId, userRole) {
     try {
       const backup = await this.createLocalBackup('manual');
-      
+
       // Log the backup creation
       if (this.userManagementService) {
         await this.userManagementService.logActivity(
-          userId, 
-          'CREATE_BACKUP', 
+          userId,
+          'CREATE_BACKUP',
           `Manual backup created: ${backup.fileName}`
         );
       }
