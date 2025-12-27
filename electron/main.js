@@ -9,12 +9,15 @@ const UserManagementService = require('../src/services/userManagement.service');
 const BackupService = require('../src/services/backup.service');
 const InventoryService = require('../src/services/inventory.service');
 const googleDriveService = require('../src/services/googleDrive.service');
+const AIService = require('../src/services/ai.service');
 
 let db;
 let mainWindow = null;
 let userManagementService;
 let backupService;
 let inventoryService;
+let aiService;
+
 
 // Initialize database connection
 async function initializeDatabase() {
@@ -40,6 +43,7 @@ async function initializeDatabase() {
         backupService = new BackupService(db);
         backupService.setUserManagementService(userManagementService);
         inventoryService = new InventoryService(db, userManagementService);
+        aiService = new AIService(db);
 
         // Initialize books table if it doesn't exist
         await db.exec(`
@@ -345,6 +349,43 @@ ipcMain.handle('get-inventory-summary', async () => {
     } catch (error) {
         console.error('Error getting inventory summary:', error);
         throw error;
+    }
+});
+
+// AI & Advanced Analytics IPC Handlers
+ipcMain.handle('ai:get-forecast', async (event, days) => {
+    try {
+        return await aiService.generateSalesForecast(days);
+    } catch (error) {
+        console.error('AI Forecast Error:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('ai:get-recommendations', async () => {
+    try {
+        return await aiService.generateReorderRecommendations();
+    } catch (error) {
+        console.error('AI Recommendation Error:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('ai:get-anomalies', async () => {
+    try {
+        return await aiService.detectAnomalies();
+    } catch (error) {
+        console.error('AI Anomaly Error:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('ai:ask-question', async (event, query) => {
+    try {
+        return await aiService.processNaturalLanguageQuery(query);
+    } catch (error) {
+        console.error('AI NLP Error:', error);
+        return { error: error.message };
     }
 });
 

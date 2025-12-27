@@ -33,5 +33,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   connectGoogleDrive: () => ipcRenderer.invoke('connect-google-drive'),
   setGoogleDriveTokens: (authCode) => ipcRenderer.invoke('set-google-drive-tokens', authCode),
   getGoogleDriveStatus: () => ipcRenderer.invoke('get-google-drive-status'),
-  downloadBackup: (fileId, fileName) => ipcRenderer.invoke('download-backup', fileId, fileName)
+  downloadBackup: (fileId, fileName) => ipcRenderer.invoke('download-backup', fileId, fileName),
+
+  // Advanced AI & Analytics
+  getSalesForecast: (days) => ipcRenderer.invoke('ai:get-forecast', days),
+  getReorderRecommendations: () => ipcRenderer.invoke('ai:get-recommendations'),
+  getAnomalies: () => ipcRenderer.invoke('ai:get-anomalies'),
+  askAI: (query) => ipcRenderer.invoke('ai:ask-question', query),
+
+  // Inventory Tracking
+  getStockMovements: (bookId) => ipcRenderer.invoke('get-stock-movements', bookId),
+  getInventoryBatches: (bookId) => ipcRenderer.invoke('get-inventory-batches', bookId),
+  adjustStock: (data) => ipcRenderer.invoke('adjust-stock', data),
+  getInventorySummary: () => ipcRenderer.invoke('get-inventory-summary')
 });

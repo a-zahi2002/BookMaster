@@ -7,6 +7,7 @@ import UserManagement from '../UserManagement';
 import BackupManagement from '../BackupManagement';
 import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
 import ReportsView from '../Analytics/ReportsView';
+import AIInsightsPanel from '../AI/AIInsightsPanel';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
     { id: 'users', label: 'User Management', icon: '👥' },
     { id: 'backup', label: 'Backup & Cloud', icon: '☁️' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'ai', label: 'AI Insights', icon: '🧠' },
     { id: 'reports', label: 'Reports & Export', icon: '📋' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
@@ -41,8 +43,11 @@ const AdminDashboard = () => {
       case 'analytics':
         return <AnalyticsDashboard />;
 
+      case 'ai':
+        return <AIInsightsPanel />;
+
       case 'reports':
-        return <ReportsView />;
+        return <ReportsView onNavigate={setActiveSection} />;
 
       case 'home':
         return (

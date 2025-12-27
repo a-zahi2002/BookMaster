@@ -5,7 +5,9 @@ import Sidebar from '../common/Sidebar';
 import EnhancedInventory from '../EnhancedInventory';
 import AddBookModal from '../modals/AddBookModal';
 import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
+
 import ReportsView from '../Analytics/ReportsView';
+import AIInsightsPanel from '../AI/AIInsightsPanel';
 
 const ManagerDashboard = () => {
   const { user, logout } = useAuth();
@@ -21,6 +23,7 @@ const ManagerDashboard = () => {
     { id: 'home', label: 'Dashboard', icon: '🏠' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'inventory', label: 'Inventory Management', icon: '📚' },
+    { id: 'ai', label: 'AI Insights', icon: '🧠' },
     { id: 'reports', label: 'Reports', icon: '📋' }
   ];
 
@@ -140,11 +143,14 @@ const ManagerDashboard = () => {
       case 'analytics':
         return <AnalyticsDashboard />;
 
+      case 'ai':
+        return <AIInsightsPanel />;
+
       case 'inventory':
         return <EnhancedInventory />;
 
       case 'reports':
-        return <ReportsView />;
+        return <ReportsView onNavigate={setActiveSection} />;
 
       default:
         return null;

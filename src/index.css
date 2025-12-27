@@ -77,6 +77,12 @@
   .gradient-green {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   }
+
+  .pattern-bg-dots {
+    background-color: #f8fafc;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
 }
 
 /* Custom scrollbar */
