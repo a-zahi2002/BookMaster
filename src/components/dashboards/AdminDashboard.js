@@ -32,6 +32,83 @@ const AdminDashboard = () => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
+  const handleBackup = async () => {
+    try {
+      if (window.electronAPI) {
+        const result = await window.electronAPI.createManualBackup();
+        if (result.success) {
+          alert('Backup created successfully!');
+        } else {
+          alert('Backup failed: ' + (result.error || 'Unknown error'));
+        }
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      alert('Error creating backup: ' + error.message);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      if (window.electronAPI) {
+        // Export last 10000 transactions
+        const history = await window.electronAPI.getDetailedSalesReport({
+          startDate: '2023-01-01',
+          endDate: new Date().toISOString().split('T')[0]
+        });
+
+        if (!history || history.length === 0) {
+          alert('No data to export.');
+          return;
+        }
+
+        const headers = ['Date', 'Item', 'Category', 'Quantity', 'Total', 'Payment Method'];
+        const csvContent = [
+          headers.join(','),
+          ...history.map(row => [
+            `"${new Date(row.date).toLocaleDateString()}"`,
+            `"${row.item.replace(/"/g, '""')}"`,
+            `"${row.category || ''}"`,
+            row.qty,
+            row.total,
+            row.payment_method
+          ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `full_data_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Error exporting data: ' + error.message);
+    }
+  };
+
+  const handleSystemMaintenance = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.optimizeDb) {
+        const result = await window.electronAPI.optimizeDb();
+        if (result.success) {
+          alert('System maintenance completed successfully. Database optimized.');
+        } else {
+          alert('Maintenance failed: ' + result.error);
+        }
+      } else {
+        alert('Maintenance feature not available.');
+      }
+    } catch (error) {
+      console.error('Maintenance error:', error);
+      alert('Error executing maintenance: ' + error.message);
+    }
+  };
+
   const renderContent = () => {
     switch (activeSection) {
       case 'inventory':
@@ -331,21 +408,30 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <div className="p-6 space-y-3">
-                    <button className="w-full group flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg">
+                    <button
+                      onClick={handleBackup}
+                      className="w-full group flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
+                    >
                       <span className="flex items-center space-x-2">
                         <span className="text-lg">📦</span>
                         <span className="font-semibold">Backup Database</span>
                       </span>
                       <span className="text-sm opacity-75">→</span>
                     </button>
-                    <button className="w-full group flex items-center justify-between px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg">
+                    <button
+                      onClick={handleExportData}
+                      className="w-full group flex items-center justify-between px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
+                    >
                       <span className="flex items-center space-x-2">
                         <span className="text-lg">📊</span>
                         <span className="font-semibold">Export All Data</span>
                       </span>
                       <span className="text-sm opacity-75">→</span>
                     </button>
-                    <button className="w-full group flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-600 to-amber-700 text-white rounded-xl hover:from-orange-700 hover:to-amber-800 transition-all shadow-md hover:shadow-lg">
+                    <button
+                      onClick={handleSystemMaintenance}
+                      className="w-full group flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-600 to-amber-700 text-white rounded-xl hover:from-orange-700 hover:to-amber-800 transition-all shadow-md hover:shadow-lg"
+                    >
                       <span className="flex items-center space-x-2">
                         <span className="text-lg">🔧</span>
                         <span className="font-semibold">System Maintenance</span>

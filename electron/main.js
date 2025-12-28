@@ -737,6 +737,18 @@ process.on('unhandledRejection', (reason, promise) => {
     // Don't crash the app, just log the error
 });
 
+// System Maintenance
+ipcMain.handle('optimize-db', async () => {
+    try {
+        await db.exec('VACUUM');
+        await db.exec('ANALYZE');
+        return { success: true };
+    } catch (error) {
+        console.error('Optimization error:', error);
+        return { success: false, error: error.message };
+    }
+});
+
 // Make sure to close the database connection when the app quits
 app.on('will-quit', async () => {
     if (db) {

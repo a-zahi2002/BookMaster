@@ -46,6 +46,30 @@ const SettingsView = () => {
     }
   };
 
+  const handleBackup = async () => {
+    try {
+      if (window.electronAPI) {
+        const result = await window.electronAPI.createManualBackup();
+        if (result.success) {
+          alert('Backup created successfully!');
+        } else {
+          alert('Backup failed: ' + (result.error || 'Unknown error'));
+        }
+      }
+    } catch (error) {
+      alert('Error creating backup: ' + error.message);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      // Reuse export logic or simplify
+      alert('Use the Admin Dashboard for full data export features.');
+    } catch (error) {
+      alert('Error exporting data: ' + error.message);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -144,10 +168,10 @@ const SettingsView = () => {
           </div>
           <div className="card-content">
             <div className="space-y-4">
-              <button className="btn-primary w-full">
+              <button onClick={handleBackup} className="btn-primary w-full">
                 Backup Database
               </button>
-              <button className="btn-secondary w-full">
+              <button onClick={handleExport} className="btn-secondary w-full">
                 Export Data (CSV)
               </button>
               <div>

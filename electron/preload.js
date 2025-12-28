@@ -57,6 +57,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSalesHistory: (limit) => ipcRenderer.invoke('get-sales-history', limit),
   getDetailedSalesReport: (dateRange) => ipcRenderer.invoke('get-detailed-sales-report', dateRange),
 
+  // System Maintenance
+  optimizeDb: () => ipcRenderer.invoke('optimize-db'),
+
   // Transaction
   processSale: (saleData) => ipcRenderer.invoke('process-sale', saleData)
 });
