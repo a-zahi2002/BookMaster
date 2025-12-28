@@ -1,8 +1,8 @@
 import React from 'react';
-import { useData } from '../contexts/DataContext';
+import { useCart } from '../../contexts/CartContext';
 
 const Cart = ({ onClose }) => {
-  const { cart, removeFromCart, clearCart } = useData();
+  const { cart, removeFromCart, clearCart } = useCart();
 
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 

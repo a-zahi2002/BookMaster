@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useData } from '../contexts/DataContext';
+import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Search, Edit, Trash2, Package, History, DollarSign } from 'lucide-react';
 import BookModal from './modals/BookModal';
 
 const EnhancedInventory = () => {
   const { user } = useAuth();
-  const { books, deleteBook, updateBook } = useData();
+  const { books, deleteBook, updateBook } = useBooks();
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
@@ -33,6 +33,24 @@ const EnhancedInventory = () => {
         await deleteBook(id);
       } catch (error) {
         alert('Failed to delete book');
+      }
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (books.length === 0) return;
+
+    if (window.confirm('WARNING: Are you sure you want to delete ALL books from inventory? This action cannot be undone.')) {
+      if (window.confirm('Please confirm again: Delete ENTIRE inventory?')) {
+        try {
+          // Process deletes sequentially to avoid database race conditions
+          for (const book of books) {
+            await deleteBook(book.id);
+          }
+        } catch (error) {
+          console.error('Error in bulk delete:', error);
+          alert('Some items may not have been deleted');
+        }
       }
     }
   };
@@ -96,6 +114,16 @@ const EnhancedInventory = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add Book
           </button>
+          {(user?.role === 'admin' || user?.role === 'manager') && books.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              className="ml-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center font-medium shadow-sm"
+              title="Delete All Inventory"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete All
+            </button>
+          )}
         </div>
 
         {/* Enhanced Stats */}
@@ -234,7 +262,7 @@ const EnhancedInventory = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`text-sm font-medium ${book.stock_quantity < 5 ? 'text-red-600' :
-                        book.stock_quantity < 10 ? 'text-yellow-600' : 'text-green-600'
+                      book.stock_quantity < 10 ? 'text-yellow-600' : 'text-green-600'
                       }`}>
                       {book.stock_quantity}
                     </span>
@@ -244,10 +272,10 @@ const EnhancedInventory = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${book.stock_quantity < 5
-                        ? 'bg-red-100 text-red-800'
-                        : book.stock_quantity < 10
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
+                      ? 'bg-red-100 text-red-800'
+                      : book.stock_quantity < 10
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
                       }`}>
                       {book.stock_quantity < 5 ? 'Critical' : book.stock_quantity < 10 ? 'Low' : 'Good'}
                     </span>

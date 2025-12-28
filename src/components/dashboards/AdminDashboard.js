@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../contexts/DataContext';
+import { useBooks } from '../../contexts/BookContext';
 import Sidebar from '../common/Sidebar';
 import EnhancedInventory from '../EnhancedInventory';
 import UserManagement from '../UserManagement';
@@ -8,11 +8,14 @@ import BackupManagement from '../BackupManagement';
 import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
 import ReportsView from '../Analytics/ReportsView';
 import AIInsightsPanel from '../AI/AIInsightsPanel';
+import { Menu, X, CheckCircle } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
-  const { books, getBooks } = useData();
+  const { books, getBooks } = useBooks();
   const [activeSection, setActiveSection] = useState('home');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
 
   useEffect(() => {
     getBooks();
@@ -52,6 +55,27 @@ const AdminDashboard = () => {
       case 'home':
         return (
           <div className="p-8 space-y-8 max-w-7xl mx-auto">
+            {/* System Status Banner */}
+            {showBanner && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                    <CheckCircle className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-900">System Operational</h4>
+                    <p className="text-xs text-emerald-700">All services are running smoothly.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowBanner(false)}
+                  className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-500 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
             {/* Header Section */}
             <div>
               <h2 className="text-3xl font-bold text-gray-900">System Overview</h2>
@@ -63,11 +87,11 @@ const AdminDashboard = () => {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
                 <div className="absolute right-0 top-0 h-full w-1 bg-green-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300" />
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">System Status</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider truncate">System Status</p>
                     <h3 className="text-2xl font-bold text-gray-900 mt-2">Operational</h3>
                   </div>
-                  <div className="h-10 w-10 bg-green-50 rounded-xl flex items-center justify-center">
+                  <div className="h-10 w-10 bg-green-50 rounded-xl flex items-center justify-center shrink-0 ml-3">
                     <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
                   </div>
                 </div>
@@ -80,11 +104,11 @@ const AdminDashboard = () => {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
                 <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300" />
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Database</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider truncate">Database</p>
                     <h3 className="text-2xl font-bold text-gray-900 mt-2">Connected</h3>
                   </div>
-                  <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                  <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 ml-3">
                     <span className="text-blue-600 text-lg">💾</span>
                   </div>
                 </div>
@@ -97,11 +121,11 @@ const AdminDashboard = () => {
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
                 <div className="absolute right-0 top-0 h-full w-1 bg-purple-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300" />
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Last Backup</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider truncate">Last Backup</p>
                     <h3 className="text-2xl font-bold text-gray-900 mt-2">2h Ago</h3>
                   </div>
-                  <div className="h-10 w-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <div className="h-10 w-10 bg-purple-50 rounded-xl flex items-center justify-center shrink-0 ml-3">
                     <span className="text-purple-600 text-lg">☁️</span>
                   </div>
                 </div>
@@ -248,6 +272,48 @@ const AdminDashboard = () => {
                     ))}
                   </div>
                 </div>
+                {/* Appearance Settings */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <span className="text-xl">🎨</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Appearance & Theme</h3>
+                        <p className="text-sm text-gray-600">Customize the look and feel</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Theme Preference</label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <button className="flex flex-col items-center p-2 border-2 border-indigo-600 bg-indigo-50 rounded-lg transition-all">
+                          <div className="w-full h-8 bg-white border border-gray-200 rounded mb-2"></div>
+                          <span className="text-xs font-medium text-indigo-700">Light</span>
+                        </button>
+                        <button className="flex flex-col items-center p-2 border border-gray-200 hover:border-gray-300 rounded-lg transition-all">
+                          <div className="w-full h-8 bg-gray-900 rounded mb-2"></div>
+                          <span className="text-xs font-medium text-gray-600">Dark</span>
+                        </button>
+                        <button className="flex flex-col items-center p-2 border border-gray-200 hover:border-gray-300 rounded-lg transition-all">
+                          <div className="w-full h-8 bg-gradient-to-br from-white to-gray-900 border border-gray-200 rounded mb-2"></div>
+                          <span className="text-xs font-medium text-gray-600">System</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => alert('Appearance settings reset to default')}
+                        className="flex items-center text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+                      >
+                        <span className="mr-2 text-lg">🔄</span>
+                        Reset to Default
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Quick Actions Sidebar */}
@@ -337,15 +403,25 @@ const AdminDashboard = () => {
         user={user}
         onLogout={logout}
         title="Admin Panel"
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 flex-shrink-0 z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-              {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
-            </h2>
-            <p className="text-sm text-gray-500 mt-0.5">Welcome back, {user?.name}</p>
+          <div className="flex items-center">
+            <button
+              className="md:hidden mr-4 p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-sm"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+                {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">Welcome back, {user?.name}</p>
+            </div>
           </div>
           <div className="flex items-center space-x-6">
             <div className="flex flex-col items-end">

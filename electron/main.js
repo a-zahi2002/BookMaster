@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3');
@@ -517,6 +517,55 @@ ipcMain.handle('get-sale-details', async (event, saleId) => {
     }
 });
 
+// Delete all sales history
+ipcMain.handle('delete-all-sales', async (event) => {
+    try {
+        // SQLite with ON DELETE CASCADE will handle sales_items
+        await db.run('DELETE FROM sales');
+
+        // Log this critical action (assuming admin/manager)
+        await userManagementService.logActivity(1, 'DELETE_ALL_DATA', 'Cleared all analytics/sales data');
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting all sales:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Get detailed sales report
+ipcMain.handle('get-detailed-sales-report', async (event, { startDate, endDate } = {}) => {
+    try {
+        let query = `
+            SELECT 
+                s.transaction_date as date,
+                si.book_title as item,
+                s.id as transaction_id,
+                b.category as category,
+                si.quantity as qty,
+                si.subtotal as total,
+                s.payment_method
+            FROM sales_items si
+            JOIN sales s ON s.id = si.sale_id
+            LEFT JOIN books b ON b.id = si.book_id
+        `;
+
+        const params = [];
+        if (startDate && endDate) {
+            query += ` WHERE s.transaction_date BETWEEN ? AND ?`;
+            params.push(startDate + ' 00:00:00', endDate + ' 23:59:59');
+        }
+
+        query += ` ORDER BY s.transaction_date DESC`;
+
+        const report = await db.all(query, params);
+        return report;
+    } catch (error) {
+        console.error('Error getting detailed sales report:', error);
+        throw error;
+    }
+});
+
 // Backup Management IPC handlers
 ipcMain.handle('create-manual-backup', async (event) => {
     try {
@@ -545,6 +594,15 @@ ipcMain.handle('delete-local-backup', async (event, filename) => {
     }
 });
 
+ipcMain.handle('delete-all-local-backups', async (event) => {
+    try {
+        return await backupService.deleteAllLocalBackups(1, 'admin'); // Assuming admin user
+    } catch (error) {
+        console.error('Error deleting all local backups:', error);
+        throw error;
+    }
+});
+
 ipcMain.handle('delete-cloud-backup', async (event, fileId) => {
     try {
         return await backupService.deleteCloudBackup(fileId, 1, 'admin');
@@ -552,6 +610,39 @@ ipcMain.handle('delete-cloud-backup', async (event, fileId) => {
         console.error('Error deleting cloud backup:', error);
         throw error;
     }
+});
+
+ipcMain.handle('delete-all-cloud-backups', async (event) => {
+    try {
+        return await backupService.deleteAllCloudBackups(1, 'admin'); // Assuming admin user
+    } catch (error) {
+        console.error('Error deleting all cloud backups:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('select-backup-path', async () => {
+    try {
+        const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+            title: 'Select Backup Directory',
+            properties: ['openDirectory', 'createDirectory']
+        });
+
+        if (canceled || filePaths.length === 0) {
+            return { canceled: true };
+        }
+
+        const newPath = filePaths[0];
+        await backupService.setBackupPath(newPath);
+        return { success: true, path: newPath };
+    } catch (error) {
+        console.error('Error selecting backup path:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('get-backup-path', async () => {
+    return backupService.getBackupPath();
 });
 
 // Google Drive IPC handlers

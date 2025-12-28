@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useData } from '../../contexts/DataContext';
+import { useBooks } from '../../contexts/BookContext';
 
 const AddBookModal = ({ onClose, onSuccess }) => {
-  const { addBook } = useData();
+  const { addBook } = useBooks();
   const [formData, setFormData] = useState({
     title: '',
     author: '',

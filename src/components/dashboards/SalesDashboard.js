@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useData } from '../contexts/DataContext';
+import { useBooks } from '../contexts/BookContext';
+import { useCart } from '../contexts/CartContext';
 import Sidebar from '../common/Sidebar';
 import POSView from './POSView';
 import Cart from './Cart';
 
 const SalesDashboard = () => {
   const { user, logout } = useAuth();
-  const { books, cart, getBooks, addToCart } = useData();
+  const { books, getBooks } = useBooks();
+  const { cart, addToCart } = useCart();
   const [activeSection, setActiveSection] = useState('pos');
   const [showCart, setShowCart] = useState(false);
 

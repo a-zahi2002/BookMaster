@@ -117,13 +117,13 @@ const UserManagement = () => {
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'admin' && user?.role !== 'manager') {
     return (
       <div className="p-8 flex items-center justify-center h-full">
         <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-md">
           <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-red-900 mb-2">Access Denied</h2>
-          <p className="text-red-800">Only administrators have permission to manage system users.</p>
+          <p className="text-red-800">Only administrators and managers have permission to view system users.</p>
         </div>
       </div>
     );
@@ -162,13 +162,15 @@ const UserManagement = () => {
             <Activity className="h-4 w-4 mr-2 text-gray-500" />
             View Logs
           </button>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium transition-colors shadow-lg shadow-indigo-200"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </button>
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium transition-colors shadow-lg shadow-indigo-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add User
+            </button>
+          )}
         </div>
       </div>
 
@@ -203,7 +205,7 @@ const UserManagement = () => {
       {/* Main Content Card */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Toolbar */}
-        <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center bg-gray-50/50 gap-4">
+        <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center bg-gray-50 gap-4">
           <h3 className="font-bold text-gray-900 text-lg">System Users Directory</h3>
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -268,27 +270,31 @@ const UserManagement = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => { setSelectedUser(userItem); setShowEditModal(true); }}
-                        className="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg transition-colors"
-                        title="Edit User"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleResetPassword(userItem.id)}
-                        className="p-2 hover:bg-yellow-50 text-yellow-600 rounded-lg transition-colors"
-                        title="Reset Password"
-                      >
-                        <Key className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleToggleUserStatus(userItem.id)}
-                        className={`p-2 rounded-lg transition-colors ${userItem.is_active ? 'hover:bg-red-50 text-red-600' : 'hover:bg-green-50 text-green-600'}`}
-                        title={userItem.is_active ? "Deactivate" : "Activate"}
-                      >
-                        {userItem.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
+                      {user?.role === 'admin' && (
+                        <>
+                          <button
+                            onClick={() => { setSelectedUser(userItem); setShowEditModal(true); }}
+                            className="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg transition-colors"
+                            title="Edit User"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleResetPassword(userItem.id)}
+                            className="p-2 hover:bg-yellow-50 text-yellow-600 rounded-lg transition-colors"
+                            title="Reset Password"
+                          >
+                            <Key className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleUserStatus(userItem.id)}
+                            className={`p-2 rounded-lg transition-colors ${userItem.is_active ? 'hover:bg-red-50 text-red-600' : 'hover:bg-green-50 text-green-600'}`}
+                            title={userItem.is_active ? "Deactivate" : "Activate"}
+                          >
+                            {userItem.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => loadActivityLogs(userItem.id)}
                         className="p-2 hover:bg-purple-50 text-purple-600 rounded-lg transition-colors"

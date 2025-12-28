@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       let userData;
-      
+
       if (isElectron) {
         const { ipcRenderer } = window.require('electron');
         userData = await ipcRenderer.invoke('login', { username, password });
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
     ];
 
     const foundUser = users.find(u => u.username === username && u.password === password);
-    
+
     if (!foundUser) {
       throw new Error('Invalid username or password');
     }
@@ -60,13 +60,19 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  const updateProfile = (data) => {
+    const newUser = { ...user, ...data };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   const logout = async () => {
     try {
       if (isElectron) {
         const { ipcRenderer } = window.require('electron');
         await ipcRenderer.invoke('logout');
       }
-      
+
       setUser(null);
       localStorage.removeItem('user');
     } catch (error) {
@@ -78,6 +84,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    updateProfile,
     loading,
     isElectron
   };

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { useData } from '../contexts/DataContext';
+import { useBooks } from '../contexts/BookContext';
+import { useCart } from '../contexts/CartContext';
 import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 
 const POSView = () => {
-  const { books, cart, addToCart, updateCartItem, removeFromCart, clearCart, processCheckout } = useData();
+  const { books } = useBooks();
+  const { cart, addToCart, updateCartItem, removeFromCart, clearCart, processCheckout } = useCart();
   const [searchTerm, setSearchTerm] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -17,7 +19,7 @@ const POSView = () => {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    
+
     setIsProcessing(true);
     try {
       await processCheckout();
@@ -35,7 +37,7 @@ const POSView = () => {
       <div className="flex-1 flex flex-col p-6 min-w-0">
         <div className="mb-6 flex-shrink-0">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Point of Sale</h1>
-          
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -111,7 +113,7 @@ const POSView = () => {
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <button
@@ -146,7 +148,7 @@ const POSView = () => {
                 LKR {cartTotal.toLocaleString()}
               </span>
             </div>
-            
+
             <div className="space-y-2">
               <button
                 onClick={handleCheckout}
@@ -156,7 +158,7 @@ const POSView = () => {
                 <CreditCard className="h-4 w-4 mr-2" />
                 {isProcessing ? 'Processing...' : 'Checkout'}
               </button>
-              
+
               <button
                 onClick={clearCart}
                 className="btn-secondary w-full"

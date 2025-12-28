@@ -27,13 +27,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createManualBackup: () => ipcRenderer.invoke('create-manual-backup'),
   getBackupHistory: () => ipcRenderer.invoke('get-backup-history'),
   deleteLocalBackup: (filename) => ipcRenderer.invoke('delete-local-backup', filename),
+  deleteAllLocalBackups: () => ipcRenderer.invoke('delete-all-local-backups'),
   deleteCloudBackup: (fileId) => ipcRenderer.invoke('delete-cloud-backup', fileId),
+  deleteAllCloudBackups: () => ipcRenderer.invoke('delete-all-cloud-backups'),
+  downloadBackup: (fileId, fileName) => ipcRenderer.invoke('download-backup', fileId, fileName),
+  selectBackupPath: () => ipcRenderer.invoke('select-backup-path'),
+  getBackupPath: () => ipcRenderer.invoke('get-backup-path'),
 
   // Google Drive
   connectGoogleDrive: () => ipcRenderer.invoke('connect-google-drive'),
   setGoogleDriveTokens: (authCode) => ipcRenderer.invoke('set-google-drive-tokens', authCode),
   getGoogleDriveStatus: () => ipcRenderer.invoke('get-google-drive-status'),
-  downloadBackup: (fileId, fileName) => ipcRenderer.invoke('download-backup', fileId, fileName),
 
   // Advanced AI & Analytics
   getSalesForecast: (days) => ipcRenderer.invoke('ai:get-forecast', days),
@@ -45,5 +49,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getStockMovements: (bookId) => ipcRenderer.invoke('get-stock-movements', bookId),
   getInventoryBatches: (bookId) => ipcRenderer.invoke('get-inventory-batches', bookId),
   adjustStock: (data) => ipcRenderer.invoke('adjust-stock', data),
-  getInventorySummary: () => ipcRenderer.invoke('get-inventory-summary')
+  getInventorySummary: () => ipcRenderer.invoke('get-inventory-summary'),
+
+  // Sales & Analytics
+  deleteAllSales: () => ipcRenderer.invoke('delete-all-sales'),
+  getSalesHistory: (limit) => ipcRenderer.invoke('get-sales-history', limit),
+  getSalesHistory: (limit) => ipcRenderer.invoke('get-sales-history', limit),
+  getDetailedSalesReport: (dateRange) => ipcRenderer.invoke('get-detailed-sales-report', dateRange),
+
+  // Transaction
+  processSale: (saleData) => ipcRenderer.invoke('process-sale', saleData)
 });

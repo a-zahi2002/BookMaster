@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useData } from '../../contexts/DataContext';
+import { useBooks } from '../../contexts/BookContext';
 import { X } from 'lucide-react';
 
 const BookModal = ({ book, onClose }) => {
-  const { addBook, updateBook } = useData();
+  const { addBook, updateBook } = useBooks();
   const [formData, setFormData] = useState({
     title: book?.title || '',
     author: book?.author || '',

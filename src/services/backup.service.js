@@ -7,12 +7,43 @@ const googleDriveService = require('./googleDrive.service');
 class BackupService {
   constructor(db) {
     this.db = db;
-    this.backupDir = path.join(app.getPath('userData'), 'backups');
+    this.configPath = path.join(app.getPath('userData'), 'backup-config.json');
+    this.backupDir = path.join(app.getPath('userData'), 'backups'); // Default
+
+    // Load config and then initialize
+    this.loadConfig().then(() => {
+      this.initializeBackupDirectory();
+    });
+
     this.isOnline = false;
     this.pendingBackups = [];
-    this.initializeBackupDirectory();
     this.setupNetworkMonitoring();
     this.scheduleAutoBackup();
+    this.checkAndRunMissedCleanup();
+  }
+
+  async loadConfig() {
+    try {
+      const data = await fs.readFile(this.configPath, 'utf8');
+      const config = JSON.parse(data);
+      if (config.backupDir) {
+        this.backupDir = config.backupDir;
+      }
+    } catch (e) {
+      // Config file might not exist yet, use default
+    }
+  }
+
+  async setBackupPath(newPath) {
+    try {
+      this.backupDir = newPath;
+      await this.initializeBackupDirectory();
+      await fs.writeFile(this.configPath, JSON.stringify({ backupDir: newPath }));
+      return true;
+    } catch (error) {
+      console.error('Error setting backup path:', error);
+      throw error;
+    }
   }
 
   async initializeBackupDirectory() {
@@ -55,6 +86,55 @@ class BackupService {
       console.log('Running scheduled backup...');
       await this.createAutoBackup();
     });
+
+    // Schedule cleanup of old backups (cloud and local) daily at midnight
+    cron.schedule('0 0 * * *', async () => {
+      console.log('Running scheduled cleanup...');
+      await this.runCleanupTasks();
+    });
+  }
+
+  async runCleanupTasks() {
+    console.log('Executing backup cleanup tasks...');
+    await this.cleanupOldCloudBackups();
+    await this.cleanupOldLocalBackups();
+    await this.saveLastCleanupTime();
+  }
+
+  async saveLastCleanupTime() {
+    try {
+      const configPath = path.join(app.getPath('userData'), 'last-cleanup.json');
+      await fs.writeFile(configPath, JSON.stringify({ timestamp: Date.now() }));
+    } catch (error) {
+      console.error('Error saving last cleanup time:', error);
+    }
+  }
+
+  async getLastCleanupTime() {
+    try {
+      const configPath = path.join(app.getPath('userData'), 'last-cleanup.json');
+      const data = await fs.readFile(configPath, 'utf8');
+      return JSON.parse(data).timestamp;
+    } catch (e) {
+      return 0; // Never run or file doesn't exist
+    }
+  }
+
+  getBackupPath() {
+    return this.backupDir;
+  }
+
+  async checkAndRunMissedCleanup() {
+    try {
+      const lastRun = await this.getLastCleanupTime();
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      if (Date.now() - lastRun > twentyFourHours) {
+        console.log('Missed scheduled cleanup, running now...');
+        await this.runCleanupTasks();
+      }
+    } catch (error) {
+      console.error('Error checking missed cleanup:', error);
+    }
   }
 
   async createLocalBackup(type = 'manual') {
@@ -270,8 +350,8 @@ class BackupService {
 
   async deleteLocalBackup(filename, userId, userRole) {
     try {
-      if (userRole !== 'admin') {
-        throw new Error('Only administrators can delete backups');
+      if (userRole !== 'admin' && userRole !== 'manager') {
+        throw new Error('Only administrators and managers can delete backups');
       }
 
       const filePath = path.join(this.backupDir, filename);
@@ -301,10 +381,42 @@ class BackupService {
     }
   }
 
+  async deleteAllLocalBackups(userId, userRole) {
+    try {
+      if (userRole !== 'admin' && userRole !== 'manager') {
+        throw new Error('Only administrators and managers can delete backups');
+      }
+
+      const files = await fs.readdir(this.backupDir);
+      let deletedCount = 0;
+
+      for (const file of files) {
+        if (file.endsWith('.db') || (file.endsWith('.json') && file.startsWith('logs-'))) {
+          const filePath = path.join(this.backupDir, file);
+          await fs.unlink(filePath);
+          deletedCount++;
+        }
+      }
+
+      if (this.userManagementService) {
+        await this.userManagementService.logActivity(
+          userId,
+          'DELETE_ALL_BACKUPS',
+          `Deleted all local backups (${deletedCount} files)`
+        );
+      }
+
+      return { success: true, count: deletedCount };
+    } catch (error) {
+      console.error('Error deleting all local backups:', error);
+      throw error;
+    }
+  }
+
   async deleteCloudBackup(fileId, userId, userRole) {
     try {
-      if (userRole !== 'admin') {
-        throw new Error('Only administrators can delete backups');
+      if (userRole !== 'admin' && userRole !== 'manager') {
+        throw new Error('Only administrators and managers can delete backups');
       }
 
       await googleDriveService.deleteBackup(fileId);
@@ -321,6 +433,116 @@ class BackupService {
     } catch (error) {
       console.error('Error deleting cloud backup:', error);
       throw error;
+    }
+  }
+
+  async deleteAllCloudBackups(userId, userRole) {
+    try {
+      if (userRole !== 'admin' && userRole !== 'manager') {
+        throw new Error('Only administrators and managers can delete backups');
+      }
+
+      const files = await googleDriveService.listBackups();
+      let deletedCount = 0;
+
+      for (const file of files) {
+        try {
+          await googleDriveService.deleteBackup(file.id);
+          deletedCount++;
+        } catch (err) {
+          console.error(`Failed to delete cloud backup ${file.id}:`, err);
+        }
+      }
+
+      if (this.userManagementService) {
+        await this.userManagementService.logActivity(
+          userId,
+          'DELETE_ALL_CLOUD_BACKUPS',
+          `Deleted all cloud backups (${deletedCount} files)`
+        );
+      }
+
+      return { success: true, count: deletedCount };
+    } catch (error) {
+      console.error('Error deleting all cloud backups:', error);
+      throw error;
+    }
+  }
+
+  async cleanupOldLocalBackups() {
+    try {
+      const files = await fs.readdir(this.backupDir);
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      let deletedCount = 0;
+
+      for (const file of files) {
+        if (!file.endsWith('.db')) continue;
+
+        const filePath = path.join(this.backupDir, file);
+        const stats = await fs.stat(filePath);
+
+        if (stats.birthtime.getTime() < sevenDaysAgo) {
+          await fs.unlink(filePath);
+
+          // Try to delete corresponding logs file
+          const logsFile = file.replace('.db', '.json').replace('backup-', 'logs-');
+          const logsPath = path.join(this.backupDir, logsFile);
+          try {
+            await fs.unlink(logsPath);
+          } catch (e) {
+            // Logs file might not exist
+          }
+
+          console.log(`Auto-deleted old local backup: ${file}`);
+          deletedCount++;
+        }
+      }
+
+      if (deletedCount > 0 && this.userManagementService) {
+        await this.userManagementService.logActivity(
+          1,
+          'AUTO_CLEANUP_LOCAL',
+          `Auto-deleted ${deletedCount} old local backups`
+        );
+      }
+    } catch (error) {
+      console.error('Error cleaning up old local backups:', error);
+    }
+  }
+
+  async cleanupOldCloudBackups() {
+    if (!this.isOnline || !googleDriveService.getConnectionStatus().isConnected) {
+      return;
+    }
+
+    try {
+      const files = await googleDriveService.listBackups();
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      let deletedCount = 0;
+
+      for (const file of files) {
+        const fileDate = new Date(file.createdTime).getTime();
+        if (fileDate < sevenDaysAgo) {
+          try {
+            await googleDriveService.deleteBackup(file.id);
+            console.log(`Auto-deleted old cloud backup: ${file.name}`);
+            deletedCount++;
+          } catch (err) {
+            console.error(`Failed to delete old backup ${file.id}:`, err);
+          }
+        }
+      }
+
+      if (deletedCount > 0 && this.userManagementService) {
+        // Log system activity if possible, using admin/system ID usually 0 or 1
+        await this.userManagementService.logActivity(
+          1, // Assuming admin ID 1 for system actions
+          'AUTO_CLEANUP',
+          `Auto-deleted ${deletedCount} old cloud backups`
+        );
+      }
+    } catch (error) {
+      console.error('Error cleaning up old cloud backups:', error);
     }
   }
 

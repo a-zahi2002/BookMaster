@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../contexts/DataContext';
+import { useBooks } from '../../contexts/BookContext';
+import { useCart } from '../../contexts/CartContext';
 import {
   Search,
   ShoppingCart,
@@ -14,15 +15,20 @@ import {
   User,
   Receipt,
   Calculator,
-  Scan
+
+  Scan,
+  Menu,
+  X
 } from 'lucide-react';
 import BookMasterLogo from '../common/BookMasterLogo';
 
 const CashierDashboard = () => {
   const { user, logout } = useAuth();
-  const { books, cart, addToCart, updateCartItem, removeFromCart, clearCart, processCheckout } = useData();
+  const { books } = useBooks();
+  const { cart, addToCart, updateCartItem, removeFromCart, clearCart, processCheckout } = useCart();
   const [searchTerm, setSearchTerm] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [cashReceived, setCashReceived] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -50,22 +56,43 @@ const CashierDashboard = () => {
     loadRecentSales();
   }, []);
 
-  const loadTodayStats = () => {
-    // Mock data - in real app, this would come from the database
-    setTodayStats({
-      totalSales: 45230,
-      transactionCount: 23,
-      averageTransaction: 1966
-    });
+  const loadTodayStats = async () => {
+    try {
+      if (window.electronAPI) {
+        // Today's Date Range
+        const today = new Date().toISOString().split('T')[0];
+        const report = await window.electronAPI.getDetailedSalesReport({ start: today, end: today });
+
+        setTodayStats({
+          totalSales: report.totalSales,
+          transactionCount: report.transactionCount,
+          averageTransaction: report.transactionCount > 0
+            ? Math.round(report.totalSales / report.transactionCount)
+            : 0
+        });
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
   };
 
-  const loadRecentSales = () => {
-    // Mock data - in real app, this would come from the database
-    setRecentSales([
-      { id: 1, time: '14:30', items: 2, total: 2850, method: 'Cash' },
-      { id: 2, time: '14:15', items: 1, total: 1500, method: 'Card' },
-      { id: 3, time: '13:45', items: 3, total: 4200, method: 'Cash' }
-    ]);
+  const loadRecentSales = async () => {
+    try {
+      if (window.electronAPI) {
+        const history = await window.electronAPI.getSalesHistory(5);
+        // Map backend format to UI format if needed
+        const formattedHistory = history.map(sale => ({
+          id: sale.id,
+          time: new Date(sale.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          items: sale.items_count, // Ensure backend returns this or we assume 1 for summary
+          total: sale.total_amount,
+          method: sale.payment_method
+        }));
+        setRecentSales(formattedHistory);
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
+    }
   };
 
   const handleCheckout = () => {
@@ -81,32 +108,21 @@ const CashierDashboard = () => {
 
     setIsProcessing(true);
     try {
-      await processCheckout(paymentMethod);
+      const result = await processCheckout(paymentMethod, cashReceived);
 
-      // Add to recent sales
-      const newSale = {
-        id: Date.now(),
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        items: cartItemCount,
-        total: cartTotal,
-        method: paymentMethod === 'cash' ? 'Cash' : paymentMethod === 'card' ? 'Card' : 'Mobile'
-      };
-      setRecentSales(prev => [newSale, ...prev.slice(0, 4)]);
+      if (result.success) {
+        // Refresh data from backend
+        await loadTodayStats();
+        await loadRecentSales();
 
-      // Update today's stats
-      setTodayStats(prev => ({
-        totalSales: prev.totalSales + cartTotal,
-        transactionCount: prev.transactionCount + 1,
-        averageTransaction: Math.round((prev.totalSales + cartTotal) / (prev.transactionCount + 1))
-      }));
+        setShowPaymentModal(false);
+        setCashReceived('');
+        setPaymentMethod('cash');
 
-      setShowPaymentModal(false);
-      setCashReceived('');
-      setPaymentMethod('cash');
-
-      alert('Sale completed successfully!');
+        alert('Sale completed successfully!');
+      }
     } catch (error) {
-      alert('Checkout failed. Please try again.');
+      alert('Checkout failed: ' + error.message);
     } finally {
       setIsProcessing(false);
     }
@@ -118,10 +134,20 @@ const CashierDashboard = () => {
 
   return (
     <div className="h-screen flex bg-slate-50 overflow-hidden font-sans">
+      {/* Mobile Overlay */}
+      <div
+        className={`fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
-      <div className="w-80 bg-slate-900 text-white shadow-2xl flex flex-col z-20">
+      <div className={`
+        w-80 bg-slate-900 text-white shadow-2xl flex flex-col z-40
+        fixed md:static inset-y-0 left-0 transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         {/* Header */}
-        <div className="p-6 border-b border-slate-800 bg-slate-900">
+        <div className="p-6 border-b border-slate-800 bg-slate-900 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className="h-12 w-12 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
               <BookMasterLogo size="default" />
@@ -134,6 +160,12 @@ const CashierDashboard = () => {
               </div>
             </div>
           </div>
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden text-slate-400 hover:text-white transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
         </div>
 
         {/* User Info */}
@@ -187,7 +219,7 @@ const CashierDashboard = () => {
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Recent Sales</h3>
             <span className="text-xs text-blue-400 hover:text-blue-300 cursor-pointer transition-colors">View All</span>
           </div>
-          <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2">
+          <div className="space-y-3 overflow-y-auto hide-scrollbar pr-2">
             {recentSales.map((sale) => (
               <div key={sale.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 hover:bg-slate-800 transition-colors group">
                 <div className="flex justify-between items-center mb-1">
@@ -223,9 +255,17 @@ const CashierDashboard = () => {
           {/* Header */}
           <div className="mb-8 flex-shrink-0">
             <div className="flex justify-between items-center mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Product Catalog</h1>
-                <p className="text-gray-500 mt-1">Select items to add to the current transaction</p>
+              <div className="flex items-center">
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="md:hidden mr-4 p-2 bg-white border border-gray-200 rounded-lg text-gray-500 hover:text-gray-700 shadow-sm"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Product Catalog</h1>
+                  <p className="text-gray-500 mt-1">Select items to add to the current transaction</p>
+                </div>
               </div>
               <div className="flex items-center space-x-4 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100">
                 <div className="flex items-center space-x-2 text-sm text-gray-600 border-r border-gray-200 pr-4">
@@ -260,20 +300,20 @@ const CashierDashboard = () => {
           </div>
 
           {/* Products Grid */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+          <div className="flex-1 overflow-y-auto hide-scrollbar pr-2">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-6">
               {filteredBooks.map((book) => (
                 <div
                   key={book.id}
                   onClick={() => book.stock_quantity > 0 && quickAddToCart(book)}
                   className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 transition-all duration-300 group relative overflow-hidden flex flex-col ${book.stock_quantity === 0
-                      ? 'opacity-60 cursor-not-allowed grayscale'
-                      : 'hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 cursor-pointer bg-gradient-to-br from-white to-slate-50/50'
+                    ? 'opacity-60 cursor-not-allowed grayscale'
+                    : 'hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 cursor-pointer bg-gradient-to-br from-white to-slate-50/50'
                     }`}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm ${book.stock_quantity > 10 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                        book.stock_quantity > 0 ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-red-50 text-red-700 border border-red-100'
+                      book.stock_quantity > 0 ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-red-50 text-red-700 border border-red-100'
                       }`}>
                       {book.stock_quantity > 0 ? `${book.stock_quantity} left` : 'Out of Stock'}
                     </span>
@@ -301,8 +341,8 @@ const CashierDashboard = () => {
                       </span>
                     </div>
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm ${book.stock_quantity > 0
-                        ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-blue-200'
-                        : 'bg-gray-100 text-gray-400'
+                      ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-blue-200'
+                      : 'bg-gray-100 text-gray-400'
                       }`}>
                       <Plus className="h-5 w-5 transform group-hover:scale-110 transition-transform" />
                     </div>
@@ -336,7 +376,7 @@ const CashierDashboard = () => {
           </div>
 
           {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto p-4 bg-white relative">
+          <div className="flex-1 overflow-y-auto hide-scrollbar p-4 bg-white relative">
             {/* Subtle receipt line pattern */}
             <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-50"></div>
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useData } from '../../contexts/DataContext';
+import React, { useState, useEffect } from 'react';
+import { useBooks } from '../../contexts/BookContext';
 import {
   FileText, TrendingUp, Package, Users, DollarSign, Calendar,
   Download, Printer, ChevronDown, CheckCircle, BarChart3,
@@ -7,22 +7,79 @@ import {
 } from 'lucide-react';
 
 const ReportsView = ({ onNavigate }) => {
-  const { books } = useData();
+  const { books } = useBooks();
   const [activeTab, setActiveTab] = useState('sales');
   const [dateRange, setDateRange] = useState({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
 
-  // Mock data generators
-  const mockSales = Array.from({ length: 15 }, (_, i) => ({
-    id: i,
-    date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    item: i % 2 === 0 ? 'The Great Gatsby' : '1984',
-    category: 'Fiction',
-    qty: Math.floor(Math.random() * 10) + 1,
-    total: (Math.floor(Math.random() * 10) + 1) * 1500
-  }));
+  const [salesData, setSalesData] = useState([]);
+
+  useEffect(() => {
+    loadSalesData();
+  }, [dateRange]);
+
+  const loadSalesData = async () => {
+    try {
+      const data = await window.electronAPI?.getDetailedSalesReport({
+        startDate: dateRange.start,
+        endDate: dateRange.end
+      });
+      setSalesData(data || []);
+    } catch (error) {
+      console.error('Error loading sales report:', error);
+    }
+  };
+
+  const handleExport = () => {
+    if (salesData.length === 0) {
+      alert('No data to export');
+      return;
+    }
+
+    const headers = ['Date', 'Item', 'Category', 'Quantity', 'Total Amount', 'Payment Method'];
+    const csvContent = [
+      headers.join(','),
+      ...salesData.map(row => [
+        `"${new Date(row.date).toLocaleDateString()}"`,
+        `"${row.item.replace(/"/g, '""')}"`,
+        `"${row.category || 'Uncategorized'}"`,
+        row.qty,
+        row.total,
+        row.payment_method
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `sales_report_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleResetData = async () => {
+    if (window.confirm('Are you sure you want to delete ALL sales data? This cannot be undone.')) {
+      try {
+        const result = await window.electronAPI?.deleteAllSales();
+        if (result?.success) {
+          alert('Data cleared successfully');
+          loadSalesData();
+        } else {
+          alert('Failed to clear data');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Error clearing data');
+      }
+    }
+  };
 
   const mockInventory = books.map(book => ({
     ...book,
@@ -66,24 +123,16 @@ const ReportsView = ({ onNavigate }) => {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="bg-transparent border-none text-sm focus:ring-0 p-0 text-gray-600 w-32"
-            />
-            <span className="text-gray-400">→</span>
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="bg-transparent border-none text-sm focus:ring-0 p-0 text-gray-600 w-32"
-            />
-          </div>
-
-          <button className="flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200">
+          <button
+            onClick={handleResetData}
+            className="flex items-center px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors border border-red-200"
+          >
+            Reset Data
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
+          >
             <Download className="w-4 h-4 mr-2" />
             Export
           </button>
@@ -139,22 +188,25 @@ const ReportsView = ({ onNavigate }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
                   label="Total Sales"
-                  value="LKR 145,200"
-                  subtext="↑ 12% vs last period"
+                  value={`LKR ${salesData.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}`}
+                  subtext={`${new Set(salesData.map(s => s.transaction_id)).size} Transactions`}
                   icon={TrendingUp}
                   colorClass={{ text: 'text-green-600', bg: 'bg-green-50' }}
                 />
                 <StatCard
-                  label="Transactions"
-                  value="342"
-                  subtext="Avg LKR 420 per txn"
+                  label="Items Sold"
+                  value={salesData.reduce((acc, curr) => acc + curr.qty, 0)}
+                  subtext="Total quantity"
                   icon={FileText}
                   colorClass={{ text: 'text-blue-600', bg: 'bg-blue-50' }}
                 />
                 <StatCard
                   label="Top Category"
-                  value="Fiction"
-                  subtext="45% of total sales"
+                  value={(Object.entries(salesData.reduce((acc, curr) => {
+                    acc[curr.category || 'Other'] = (acc[curr.category || 'Other'] || 0) + curr.total;
+                    return acc;
+                  }, {})).sort((a, b) => b[1] - a[1])[0]?.[0]) || 'N/A'}
+                  subtext="By revenue"
                   icon={Package}
                   colorClass={{ text: 'text-purple-600', bg: 'bg-purple-50' }}
                 />
@@ -175,23 +227,29 @@ const ReportsView = ({ onNavigate }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {mockSales.map((sale) => (
-                      <tr key={sale.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-600">{sale.date}</td>
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900">{sale.item}</div>
-                          <div className="text-xs text-gray-500">Qty: {sale.qty}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 font-medium">
-                            {sale.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right font-bold text-gray-900">
-                          LKR {sale.total.toLocaleString()}
-                        </td>
+                    {salesData.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-8 text-center text-gray-500">No sales transactions found for this period.</td>
                       </tr>
-                    ))}
+                    ) : (
+                      salesData.map((sale, idx) => (
+                        <tr key={sale.transaction_id + '-' + idx} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-600">{new Date(sale.date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4">
+                            <div className="font-medium text-gray-900">{sale.item}</div>
+                            <div className="text-xs text-gray-500">Qty: {sale.qty}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600 font-medium">
+                              {sale.category || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right font-bold text-gray-900">
+                            LKR {sale.total.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -283,7 +341,7 @@ const ReportsView = ({ onNavigate }) => {
 
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

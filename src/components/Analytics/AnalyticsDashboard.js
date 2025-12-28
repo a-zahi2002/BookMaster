@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useData } from '../../contexts/DataContext';
+import { useBooks } from '../../contexts/BookContext';
 import SalesChart from './SalesChart';
 import RevenueChart from './RevenueChart';
 import TopProductsChart from './TopProductsChart';
@@ -7,7 +7,7 @@ import InventoryChart from './InventoryChart';
 import MetricsCard from './MetricsCard';
 
 const AnalyticsDashboard = () => {
-  const { books } = useData();
+  const { books } = useBooks();
   const [timeRange, setTimeRange] = useState('7d');
   const [salesData, setSalesData] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
@@ -24,12 +24,12 @@ const AnalyticsDashboard = () => {
     const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
     const mockSalesData = [];
     const mockRevenueData = [];
-    
+
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toLocaleDateString();
-      
+
       const sales = Math.floor(Math.random() * 50000) + 10000;
       mockSalesData.push({
         date: dateStr,
@@ -81,6 +81,33 @@ const AnalyticsDashboard = () => {
     });
   };
 
+  const handleDeleteData = async () => {
+    if (window.confirm('Are you sure you want to delete ALL analytics and sales data? This action cannot be undone.')) {
+      if (window.confirm('This will permanently erase all sales history from the database. Confirm deletion?')) {
+        try {
+          const result = await window.electronAPI?.deleteAllSales();
+          if (result && result.success) {
+            alert('Analytics and sales history cleared successfully.');
+            // Reset local stats to 0 to reflect the change visually
+            setSalesData([]);
+            setRevenueData([]);
+            setMetrics(prev => ({
+              ...prev,
+              totalSales: 0,
+              totalRevenue: 0,
+              totalProfit: 0,
+              averageOrderValue: 0
+            }));
+          } else {
+            alert('Failed to delete data: ' + (result?.error || 'Unknown error'));
+          }
+        } catch (error) {
+          alert('Error executing deletion: ' + error.message);
+        }
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Time Range Selector */}
@@ -95,11 +122,10 @@ const AnalyticsDashboard = () => {
             <button
               key={option.value}
               onClick={() => setTimeRange(option.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                timeRange === option.value
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${timeRange === option.value
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               {option.label}
             </button>
@@ -205,6 +231,12 @@ const AnalyticsDashboard = () => {
             </button>
             <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
               Inventory Alert
+            </button>
+            <button
+              onClick={handleDeleteData}
+              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+            >
+              Delete All Data
             </button>
           </div>
         </div>

@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../contexts/DataContext';
+import { useBooks } from '../../contexts/BookContext';
 import Sidebar from '../common/Sidebar';
 import EnhancedInventory from '../EnhancedInventory';
+import UserManagement from '../UserManagement';
 import AddBookModal from '../modals/AddBookModal';
 import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
+import BackupManagement from '../BackupManagement';
 
 import ReportsView from '../Analytics/ReportsView';
 import AIInsightsPanel from '../AI/AIInsightsPanel';
+import { Menu } from 'lucide-react';
 
 const ManagerDashboard = () => {
   const { user, logout } = useAuth();
-  const { books, getBooks } = useData();
+  const { books, getBooks } = useBooks();
   const [activeSection, setActiveSection] = useState('home');
   const [showAddBookModal, setShowAddBookModal] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     getBooks();
@@ -22,9 +26,11 @@ const ManagerDashboard = () => {
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: '🏠' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'users', label: 'User Management', icon: '👥' },
     { id: 'inventory', label: 'Inventory Management', icon: '📚' },
+    { id: 'backup', label: 'Backup & Cloud', icon: '☁️' },
     { id: 'ai', label: 'AI Insights', icon: '🧠' },
-    { id: 'reports', label: 'Reports', icon: '📋' }
+    { id: 'reports', label: 'Reports & Exports', icon: '📋' }
   ];
 
   const renderContent = () => {
@@ -143,11 +149,17 @@ const ManagerDashboard = () => {
       case 'analytics':
         return <AnalyticsDashboard />;
 
+      case 'backup':
+        return <BackupManagement />;
+
       case 'ai':
         return <AIInsightsPanel />;
 
       case 'inventory':
         return <EnhancedInventory />;
+
+      case 'users':
+        return <UserManagement />;
 
       case 'reports':
         return <ReportsView onNavigate={setActiveSection} />;
@@ -165,16 +177,27 @@ const ManagerDashboard = () => {
         onSectionChange={setActiveSection}
         user={user}
         onLogout={logout}
+
         title="Manager Panel"
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 flex-shrink-0 z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-              {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
-            </h2>
-            <p className="text-sm text-gray-500 mt-0.5">Manager Portal</p>
+          <div className="flex items-center">
+            <button
+              className="md:hidden mr-4 p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-sm"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+                {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">Manager Portal</p>
+            </div>
           </div>
         </div>
 

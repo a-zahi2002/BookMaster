@@ -1,9 +1,9 @@
 import React from 'react';
-import { useData } from '../contexts/DataContext';
+import { useBooks } from '../contexts/BookContext';
 import { BarChart3, TrendingUp, Package, DollarSign } from 'lucide-react';
 
 const ReportsView = () => {
-  const { books } = useData();
+  const { books } = useBooks();
 
   const totalBooks = books.length;
   const totalStock = books.reduce((sum, book) => sum + book.stock_quantity, 0);

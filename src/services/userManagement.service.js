@@ -193,7 +193,11 @@ class UserManagementService {
 
   async updateUser(userId, updateData, updatedBy) {
     try {
-      const { username, role, name, email, is_active } = updateData;
+      const currentUser = await this.getUserById(userId);
+      if (!currentUser) throw new Error('User not found');
+
+      const mergedData = { ...currentUser, ...updateData };
+      const { username, role, name, email, is_active } = mergedData;
 
       await this.db.run(
         `UPDATE users 
