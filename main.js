@@ -3,6 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
+const { autoUpdater } = require('electron-updater');
+const log = require('electron-log');
+
+// Configure logging
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
 
 // Import services
 const UserManagementService = require('./src/services/userManagement.service');
@@ -18,6 +24,56 @@ let backupService;
 let inventoryService;
 let aiService;
 
+// Auto-updater initialization
+function initializeAutoUpdater() {
+    log.info('Initializing Auto Updater...');
+
+    autoUpdater.on('checking-for-update', () => {
+        log.info('Checking for update...');
+        if (mainWindow) mainWindow.webContents.send('update-message', { status: 'checking' });
+    });
+
+    autoUpdater.on('update-available', (info) => {
+        log.info('Update available:', info);
+        if (mainWindow) mainWindow.webContents.send('update-message', { status: 'available', info });
+    });
+
+    autoUpdater.on('update-not-available', (info) => {
+        log.info('Update not available:', info);
+        if (mainWindow) mainWindow.webContents.send('update-message', { status: 'not-available', info });
+    });
+
+    autoUpdater.on('error', (err) => {
+        log.error('Error in auto-updater:', err);
+        if (mainWindow) mainWindow.webContents.send('update-message', { status: 'error', error: err.message });
+    });
+
+    autoUpdater.on('download-progress', (progressObj) => {
+        let logMessage = "Download speed: " + progressObj.bytesPerSecond;
+        logMessage = logMessage + ' - Downloaded ' + progressObj.percent + '%';
+        logMessage = logMessage + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+        log.info(logMessage);
+        if (mainWindow) mainWindow.webContents.send('update-message', { status: 'progress', progress: progressObj });
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+        log.info('Update downloaded:', info);
+        if (mainWindow) mainWindow.webContents.send('update-message', { status: 'downloaded', info });
+    });
+}
+
+// IPC handlers for updater
+ipcMain.handle('check-for-updates', () => {
+    if (process.env.NODE_ENV === 'development') {
+        log.info('Skipping update check in development mode');
+        return;
+    }
+    autoUpdater.checkForUpdatesAndNotify();
+});
+
+ipcMain.handle('quit-and-install', () => {
+    autoUpdater.quitAndInstall();
+});
 
 // Initialize database connection
 async function initializeDatabase() {
@@ -47,52 +103,52 @@ async function initializeDatabase() {
 
         // Initialize books table if it doesn't exist
         await db.exec(`
-            CREATE TABLE IF NOT EXISTS books (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                author TEXT NOT NULL,
-                isbn TEXT NOT NULL,
-                price REAL NOT NULL,
-                stock_quantity INTEGER NOT NULL,
-                publisher TEXT NOT NULL,
-                category TEXT DEFAULT 'General',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS books(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    author TEXT NOT NULL,
+    isbn TEXT NOT NULL,
+    price REAL NOT NULL,
+    stock_quantity INTEGER NOT NULL,
+    publisher TEXT NOT NULL,
+    category TEXT DEFAULT 'General',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+    `);
         console.log('Books table initialized');
 
         // Initialize sales table for completed transactions
         await db.exec(`
-            CREATE TABLE IF NOT EXISTS sales (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                total_amount REAL NOT NULL,
-                payment_method TEXT NOT NULL,
-                cashier_id INTEGER,
-                transaction_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                status TEXT DEFAULT 'COMPLETED',
-                cash_received REAL,
-                change_given REAL
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS sales(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        total_amount REAL NOT NULL,
+        payment_method TEXT NOT NULL,
+        cashier_id INTEGER,
+        transaction_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'COMPLETED',
+        cash_received REAL,
+        change_given REAL
+    )
+    `);
         console.log('Sales table initialized');
 
         // Initialize sales_items table for transaction details
         await db.exec(`
-            CREATE TABLE IF NOT EXISTS sales_items (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                sale_id INTEGER NOT NULL,
-                book_id INTEGER NOT NULL,
-                batch_id INTEGER,
-                book_title TEXT NOT NULL,
-                book_author TEXT NOT NULL,
-                quantity INTEGER NOT NULL,
-                unit_price REAL NOT NULL,
-                subtotal REAL NOT NULL,
-                FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
-                FOREIGN KEY (book_id) REFERENCES books(id)
-            )
-        `);
+            CREATE TABLE IF NOT EXISTS sales_items(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sale_id INTEGER NOT NULL,
+        book_id INTEGER NOT NULL,
+        batch_id INTEGER,
+        book_title TEXT NOT NULL,
+        book_author TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price REAL NOT NULL,
+        subtotal REAL NOT NULL,
+        FOREIGN KEY(sale_id) REFERENCES sales(id) ON DELETE CASCADE,
+        FOREIGN KEY(book_id) REFERENCES books(id)
+    )
+    `);
         console.log('Sales items table initialized');
 
         // Load saved Google Drive tokens
@@ -134,13 +190,13 @@ function createWindow() {
         console.log('Window finished loading content');
         // Clear localStorage to force logout and show login screen
         mainWindow.webContents.executeJavaScript(`
-            localStorage.removeItem('user');
-            sessionStorage.clear();
-            // Redirect to login if not already there
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-                window.location.href = '/login';
-            }
-        `).catch(err => {
+localStorage.removeItem('user');
+sessionStorage.clear();
+// Redirect to login if not already there
+if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+    window.location.href = '/login';
+}
+`).catch(err => {
             console.error('Error clearing session:', err);
         });
     });
@@ -168,6 +224,7 @@ function createWindow() {
 app.whenReady().then(async () => {
     await initializeDatabase();
     createWindow();
+    initializeAutoUpdater();
 });
 
 // Authentication IPC handlers
@@ -315,7 +372,7 @@ ipcMain.handle('delete-book', async (event, id) => {
         await db.run('DELETE FROM books WHERE id = ?', [id]);
 
         // Log activity
-        await userManagementService.logActivity(1, 'DELETE_BOOK', `Deleted book: ${book?.title || 'Unknown'}`);
+        await userManagementService.logActivity(1, 'DELETE_BOOK', `Deleted book: ${book?.title || 'Unknown'} `);
 
         return { success: true };
     } catch (error) {
@@ -418,12 +475,12 @@ ipcMain.handle('process-sale', async (event, saleData) => {
 
             if (!book) {
                 await db.run('ROLLBACK');
-                return { success: false, error: `Book not found: ${item.title}` };
+                return { success: false, error: `Book not found: ${item.title} ` };
             }
 
             if (book.stock_quantity < item.quantity) {
                 await db.run('ROLLBACK');
-                return { success: false, error: `Insufficient stock for: ${item.title}` };
+                return { success: false, error: `Insufficient stock for: ${item.title} ` };
             }
 
             // Allocation strategy: FIFO (First-In, First-Out)
@@ -487,8 +544,8 @@ ipcMain.handle('process-sale', async (event, saleData) => {
             : 0;
 
         const saleResult = await db.run(
-            `INSERT INTO sales (total_amount, payment_method, cashier_id, cash_received, change_given, status) 
-             VALUES (?, ?, ?, ?, ?, 'COMPLETED')`,
+            `INSERT INTO sales(total_amount, payment_method, cashier_id, cash_received, change_given, status)
+VALUES(?, ?, ?, ?, ?, 'COMPLETED')`,
             [totalAmount, saleData.paymentMethod, saleData.cashierId || 1, saleData.cashReceived || totalAmount, changeGiven]
         );
 
@@ -498,8 +555,8 @@ ipcMain.handle('process-sale', async (event, saleData) => {
         for (const item of saleItems) {
             // Insert sale item
             await db.run(
-                `INSERT INTO sales_items (sale_id, book_id, book_title, book_author, quantity, unit_price, subtotal) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO sales_items(sale_id, book_id, book_title, book_author, quantity, unit_price, subtotal)
+VALUES(?, ?, ?, ?, ?, ?, ?)`,
                 [saleId, item.bookId, item.title, item.author, item.quantity, item.unitPrice, item.subtotal]
             );
 
@@ -514,7 +571,7 @@ ipcMain.handle('process-sale', async (event, saleData) => {
         await userManagementService.logActivity(
             saleData.cashierId || 1,
             'SALE_COMPLETED',
-            `Sale completed: ${saleItems.length} items, Total: ${totalAmount}`
+            `Sale completed: ${saleItems.length} items, Total: ${totalAmount} `
         );
 
         // COMMIT TRANSACTION - all operations successful
@@ -549,8 +606,8 @@ ipcMain.handle('get-sales-history', async (event, limit = 50) => {
              FROM sales s 
              LEFT JOIN sales_items si ON s.id = si.sale_id 
              GROUP BY s.id 
-             ORDER BY s.transaction_date DESC 
-             LIMIT ?`,
+             ORDER BY s.transaction_date DESC
+LIMIT ? `,
             [limit]
         );
         return sales;
@@ -592,22 +649,22 @@ ipcMain.handle('delete-all-sales', async (event) => {
 ipcMain.handle('get-detailed-sales-report', async (event, { startDate, endDate } = {}) => {
     try {
         let query = `
-            SELECT 
-                s.transaction_date as date,
-                si.book_title as item,
-                s.id as transaction_id,
-                b.category as category,
-                si.quantity as qty,
-                si.subtotal as total,
-                s.payment_method
+            SELECT
+s.transaction_date as date,
+    si.book_title as item,
+    s.id as transaction_id,
+    b.category as category,
+    si.quantity as qty,
+    si.subtotal as total,
+    s.payment_method
             FROM sales_items si
             JOIN sales s ON s.id = si.sale_id
             LEFT JOIN books b ON b.id = si.book_id
-        `;
+    `;
 
         const params = [];
         if (startDate && endDate) {
-            query += ` WHERE s.transaction_date BETWEEN ? AND ?`;
+            query += ` WHERE s.transaction_date BETWEEN ? AND ? `;
             params.push(startDate + ' 00:00:00', endDate + ' 23:59:59');
         }
 

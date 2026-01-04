@@ -7,6 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import UpdateNotification from './components/common/UpdateNotification';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <CartProvider>
             <Router>
               <div className="min-h-screen bg-gray-50">
+                <UpdateNotification />
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route

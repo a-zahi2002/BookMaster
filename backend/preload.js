@@ -63,5 +63,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   optimizeDb: () => ipcRenderer.invoke('optimize-db'),
 
   // Transaction
-  processSale: (saleData) => ipcRenderer.invoke('process-sale', saleData)
+  processSale: (saleData) => ipcRenderer.invoke('process-sale', saleData),
+
+  // Auto Updater
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+  onUpdateMessage: (callback) => ipcRenderer.on('update-message', (event, data) => callback(data)),
+  removeUpdateListeners: () => ipcRenderer.removeAllListeners('update-message')
 });
