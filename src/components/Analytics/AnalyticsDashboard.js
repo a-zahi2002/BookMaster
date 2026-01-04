@@ -109,11 +109,11 @@ const AnalyticsDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-8 space-y-6">
       {/* Time Range Selector */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-        <div className="flex space-x-2">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h2>
+        <div className="flex space-x-2 bg-white dark:bg-slate-900 p-1 rounded-xl border border-gray-100 dark:border-slate-800">
           {[
             { value: '7d', label: '7 Days' },
             { value: '30d', label: '30 Days' },
@@ -122,9 +122,9 @@ const AnalyticsDashboard = () => {
             <button
               key={option.value}
               onClick={() => setTimeRange(option.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${timeRange === option.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${timeRange === option.value
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'
                 }`}
             >
               {option.label}
@@ -178,65 +178,62 @@ const AnalyticsDashboard = () => {
 
       {/* Additional Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Performance Metrics</h3>
           <div className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Average Order Value</span>
-              <span className="font-semibold">LKR {metrics.averageOrderValue?.toLocaleString() || '0'}</span>
+            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+              <span className="text-sm text-gray-600 dark:text-slate-400">Avg. Order Value</span>
+              <span className="font-bold text-gray-900 dark:text-white">LKR {metrics.averageOrderValue?.toLocaleString() || '0'}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Total Books</span>
-              <span className="font-semibold">{metrics.totalBooks || 0}</span>
+            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+              <span className="text-sm text-gray-600 dark:text-slate-400">Total Books</span>
+              <span className="font-bold text-gray-900 dark:text-white">{metrics.totalBooks || 0}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Conversion Rate</span>
-              <span className="font-semibold text-green-600">3.2%</span>
+            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+              <span className="text-sm text-gray-600 dark:text-slate-400">Conversion Rate</span>
+              <span className="font-bold text-green-600 dark:text-green-400">3.2%</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Inventory Health</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Inventory Health</h3>
           <div className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-gray-600">In Stock</span>
-              <span className="font-semibold text-green-600">
+            <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/10 rounded-lg">
+              <span className="text-sm text-green-700 dark:text-green-400">In Stock</span>
+              <span className="font-bold text-green-700 dark:text-green-400">
                 {books.filter(book => book.stock_quantity > 10).length}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Low Stock</span>
-              <span className="font-semibold text-yellow-600">
+            <div className="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg">
+              <span className="text-sm text-yellow-700 dark:text-yellow-400">Low Stock</span>
+              <span className="font-bold text-yellow-700 dark:text-yellow-400">
                 {books.filter(book => book.stock_quantity <= 10 && book.stock_quantity > 0).length}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Out of Stock</span>
-              <span className="font-semibold text-red-600">
+            <div className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/10 rounded-lg">
+              <span className="text-sm text-red-700 dark:text-red-400">Out of Stock</span>
+              <span className="font-bold text-red-700 dark:text-red-400">
                 {books.filter(book => book.stock_quantity === 0).length}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+            <button className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm hover:shadow-md flex items-center justify-center">
               Export Sales Report
             </button>
-            <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+            <button className="w-full px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium shadow-sm hover:shadow-md flex items-center justify-center">
               Generate Invoice
-            </button>
-            <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
-              Inventory Alert
             </button>
             <button
               onClick={handleDeleteData}
-              className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+              className="w-full px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium shadow-sm hover:shadow-md flex items-center justify-center"
             >
-              Delete All Data
+              Reset Analytics Data
             </button>
           </div>
         </div>

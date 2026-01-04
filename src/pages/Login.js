@@ -45,27 +45,27 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-900">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20 overflow-hidden">
+          <div className="mx-auto h-20 w-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20 overflow-hidden">
             <BookMasterLogo size="large" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">BookMaster POS</h2>
-          <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">BookMaster POS</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">Sign in to your account</p>
         </div>
 
         <div className="card">
           <div className="card-content p-6">
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 text-red-700 dark:text-red-400 rounded-md text-sm">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Username
                 </label>
                 <div className="relative">
@@ -84,7 +84,7 @@ const Login = () => {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Password
                 </label>
                 <div className="relative">
@@ -102,7 +102,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -130,8 +130,8 @@ const Login = () => {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-800">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 <p className="font-medium mb-2">Demo Accounts:</p>
                 <div className="space-y-1">
                   <p><span className="font-medium">Admin:</span> admin / admin123</p>

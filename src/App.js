@@ -16,7 +16,7 @@ function App() {
         <BookProvider>
           <CartProvider>
             <Router>
-              <div className="min-h-screen bg-gray-50">
+              <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-200">
                 <UpdateNotification />
                 <Routes>
                   <Route path="/login" element={<Login />} />

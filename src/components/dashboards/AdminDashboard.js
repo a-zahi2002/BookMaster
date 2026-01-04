@@ -210,19 +210,19 @@ const AdminDashboard = () => {
           <div className="p-8 space-y-8 max-w-7xl mx-auto">
             {/* System Status Banner */}
             {showBanner && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
+              <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 rounded-xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                  <div className="h-8 w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <CheckCircle className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-emerald-900">System Operational</h4>
-                    <p className="text-xs text-emerald-700">All services are running smoothly.</p>
+                    <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-400">System Operational</h4>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-500">All services are running smoothly.</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowBanner(false)}
-                  className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-500 transition-colors"
+                  className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg text-emerald-500 dark:text-emerald-400 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -231,114 +231,114 @@ const AdminDashboard = () => {
 
             {/* Header Section */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">System Overview</h2>
-              <p className="text-gray-500 mt-2">Monitor your store's performance and system health.</p>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">System Overview</h2>
+              <p className="text-gray-500 dark:text-slate-400 mt-2">Monitor your store's performance and system health.</p>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
                 <div className="absolute right-0 top-0 h-full w-1 bg-green-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300" />
                 <div className="flex justify-between items-start mb-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider truncate">System Status</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">Operational</h3>
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider truncate">System Status</p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-2">Operational</h3>
                   </div>
-                  <div className="h-10 w-10 bg-green-50 rounded-xl flex items-center justify-center shrink-0 ml-3">
+                  <div className="h-10 w-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center shrink-0 ml-3">
                     <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 flex items-center">
-                  <span className="text-green-600 font-medium mr-2">✓ 100%</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300 flex items-center">
+                  <span className="text-green-600 dark:text-green-400 font-medium mr-2">✓ 100%</span>
                   Uptime today
                 </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
                 <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300" />
                 <div className="flex justify-between items-start mb-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider truncate">Database</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">Connected</h3>
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider truncate">Database</p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-2">Connected</h3>
                   </div>
-                  <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 ml-3">
-                    <span className="text-blue-600 text-lg">💾</span>
+                  <div className="h-10 w-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center shrink-0 ml-3">
+                    <span className="text-blue-600 dark:text-blue-400 text-lg">💾</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 flex items-center">
-                  <span className="text-blue-600 font-medium mr-2">Synced</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300 flex items-center">
+                  <span className="text-blue-600 dark:text-blue-400 font-medium mr-2">Synced</span>
                   Local SQLite DB
                 </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
                 <div className="absolute right-0 top-0 h-full w-1 bg-purple-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300" />
                 <div className="flex justify-between items-start mb-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wider truncate">Last Backup</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">{calculateTimeAgo(lastBackup)}</h3>
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider truncate">Last Backup</p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{calculateTimeAgo(lastBackup)}</h3>
                   </div>
-                  <div className="h-10 w-10 bg-purple-50 rounded-xl flex items-center justify-center shrink-0 ml-3">
-                    <span className="text-purple-600 text-lg">☁️</span>
+                  <div className="h-10 w-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center shrink-0 ml-3">
+                    <span className="text-purple-600 dark:text-purple-400 text-lg">☁️</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 flex items-center">
-                  <span className="text-purple-600 font-medium mr-2">Latest:</span>
+                <p className="text-sm text-gray-600 dark:text-slate-300 flex items-center">
+                  <span className="text-purple-600 dark:text-purple-400 font-medium mr-2">Latest:</span>
                   {lastBackup ? new Date(lastBackup).toLocaleString() : 'No backups found'}
                 </p>
               </div>
             </div>
 
             {/* Detailed System Health */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-900">System Health Monitor</h3>
-                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">All Systems Normal</span>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">System Health Monitor</h3>
+                <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">All Systems Normal</span>
               </div>
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
-                  <div className="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                    <div className="h-12 w-12 bg-white rounded-full shadow-sm flex items-center justify-center mr-4 text-xl">
+                  <div className="flex items-center p-4 bg-gray-50 dark:bg-slate-800 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700/80 transition-colors">
+                    <div className="h-12 w-12 bg-white dark:bg-slate-700 rounded-full shadow-sm flex items-center justify-center mr-4 text-xl">
                       ⚡
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
-                        <h4 className="font-semibold text-gray-900">Performance</h4>
-                        <span className="text-green-600 font-bold">98%</span>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">Performance</h4>
+                        <span className="text-green-600 dark:text-green-400 font-bold">98%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
                         <div className="bg-green-500 h-2 rounded-full" style={{ width: '98%' }}></div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                    <div className="h-12 w-12 bg-white rounded-full shadow-sm flex items-center justify-center mr-4 text-xl">
+                  <div className="flex items-center p-4 bg-gray-50 dark:bg-slate-800 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700/80 transition-colors">
+                    <div className="h-12 w-12 bg-white dark:bg-slate-700 rounded-full shadow-sm flex items-center justify-center mr-4 text-xl">
                       🛡️
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
-                        <h4 className="font-semibold text-gray-900">Security</h4>
-                        <span className="text-blue-600 font-bold">Protected</span>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">Security</h4>
+                        <span className="text-blue-600 dark:text-blue-400 font-bold">Protected</span>
                       </div>
-                      <p className="text-xs text-gray-500">Firewall active, SSL enabled</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">Firewall active, SSL enabled</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Active Services</h4>
+                  <h4 className="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-2">Active Services</h4>
                   {[
                     { name: 'Database Engine', status: 'Running', color: 'green' },
                     { name: 'Backup Service', status: 'Idle', color: 'blue' },
                     { name: 'Update Manager', status: 'Checking', color: 'yellow' },
                     { name: 'User Authentication', status: 'Active', color: 'green' }
                   ].map((service, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                      <span className="text-gray-700 font-medium">{service.name}</span>
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-slate-700 last:border-0">
+                      <span className="text-gray-700 dark:text-slate-200 font-medium">{service.name}</span>
                       <div className="flex items-center">
                         <span className={`h-2 w-2 rounded-full bg-${service.color}-500 mr-2`}></span>
-                        <span className="text-sm text-gray-600">{service.status}</span>
+                        <span className="text-sm text-gray-600 dark:text-slate-400">{service.status}</span>
                       </div>
                     </div>
                   ))}
@@ -353,22 +353,22 @@ const AdminDashboard = () => {
           <div className="p-8 space-y-8 max-w-7xl mx-auto">
             {/* Header */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">System Settings</h2>
-              <p className="text-gray-500 mt-2">Configure your BookMaster POS preferences and system behavior</p>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">System Settings</h2>
+              <p className="text-gray-500 dark:text-slate-400 mt-2">Configure your BookMaster POS preferences and system behavior</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Notifications & Alerts */}
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 dark:border-slate-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <div className="h-10 w-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
                         <span className="text-xl">🔔</span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">Notifications & Alerts</h3>
-                        <p className="text-sm text-gray-600">Manage how you receive system notifications</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Notifications & Alerts</h3>
+                        <p className="text-sm text-gray-600 dark:text-slate-300">Manage how you receive system notifications</p>
                       </div>
                     </div>
                   </div>
@@ -379,10 +379,10 @@ const AdminDashboard = () => {
                       { id: 'sales', label: 'Sales Reports', desc: 'Daily sales summary emails' },
                       { id: 'updates', label: 'System Updates', desc: 'Notifications about new features' }
                     ].map((setting, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors group">
+                      <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group">
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{setting.label}</p>
-                          <p className="text-sm text-gray-500">{setting.desc}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{setting.label}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">{setting.desc}</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -391,7 +391,7 @@ const AdminDashboard = () => {
                             checked={notificationSettings[setting.id]}
                             onChange={() => handleNotificationToggle(setting.id)}
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                       </div>
                     ))}
@@ -399,15 +399,15 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Automation Settings */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 dark:border-slate-800 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <div className="h-10 w-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
                         <span className="text-xl">⚡</span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">Automation</h3>
-                        <p className="text-sm text-gray-600">Automate routine tasks and processes</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Automation</h3>
+                        <p className="text-sm text-gray-600 dark:text-slate-300">Automate routine tasks and processes</p>
                       </div>
                     </div>
                   </div>
@@ -417,75 +417,76 @@ const AdminDashboard = () => {
                       { label: 'Auto Restock Alerts', desc: 'Suggest reorder when stock is low', checked: true },
                       { label: 'End of Day Reports', desc: 'Generate reports automatically at closing', checked: true }
                     ].map((setting, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors group">
+                      <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group">
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">{setting.label}</p>
-                          <p className="text-sm text-gray-500">{setting.desc}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{setting.label}</p>
+                          <p className="text-sm text-gray-500 dark:text-slate-400">{setting.desc}</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" className="sr-only peer" defaultChecked={setting.checked} />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                         </label>
                       </div>
                     ))}
                   </div>
                 </div>
+
                 {/* Appearance Settings */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 dark:border-slate-800 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                      <div className="h-10 w-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
                         <span className="text-xl">🎨</span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">Appearance & Theme</h3>
-                        <p className="text-sm text-gray-600">Customize the look and feel</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Appearance & Theme</h3>
+                        <p className="text-sm text-gray-600 dark:text-slate-300">Customize the look and feel</p>
                       </div>
                     </div>
                   </div>
                   <div className="p-6 space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">Theme Preference</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-3">Theme Preference</label>
                       <div className="grid grid-cols-3 gap-3">
                         <button
                           onClick={() => setTheme('light')}
                           className={`flex flex-col items-center p-2 border-2 rounded-lg transition-all ${theme === 'light'
-                            ? 'border-indigo-600 bg-indigo-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'
+                            : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
                             }`}
                         >
                           <div className="w-full h-8 bg-white border border-gray-200 rounded mb-2"></div>
-                          <span className={`text-xs font-medium ${theme === 'light' ? 'text-indigo-700' : 'text-gray-600'}`}>Light</span>
+                          <span className={`text-xs font-medium ${theme === 'light' ? 'text-indigo-700 dark:text-indigo-400' : 'text-gray-600 dark:text-slate-400'}`}>Light</span>
                         </button>
                         <button
                           onClick={() => setTheme('dark')}
                           className={`flex flex-col items-center p-2 border-2 rounded-lg transition-all ${theme === 'dark'
-                            ? 'border-indigo-600 bg-indigo-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'
+                            : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
                             }`}
                         >
                           <div className="w-full h-8 bg-gray-900 rounded mb-2"></div>
-                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-indigo-700' : 'text-gray-600'}`}>Dark</span>
+                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-indigo-700 dark:text-indigo-400' : 'text-gray-600 dark:text-slate-400'}`}>Dark</span>
                         </button>
                         <button
                           onClick={() => setTheme('system')}
                           className={`flex flex-col items-center p-2 border-2 rounded-lg transition-all ${theme === 'system'
-                            ? 'border-indigo-600 bg-indigo-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'
+                            : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
                             }`}
                         >
                           <div className="w-full h-8 bg-gradient-to-br from-white to-gray-900 border border-gray-200 rounded mb-2"></div>
-                          <span className={`text-xs font-medium ${theme === 'system' ? 'text-indigo-700' : 'text-gray-600'}`}>System</span>
+                          <span className={`text-xs font-medium ${theme === 'system' ? 'text-indigo-700 dark:text-indigo-400' : 'text-gray-600 dark:text-slate-400'}`}>System</span>
                         </button>
                       </div>
                     </div>
-                    <div className="pt-2 border-t border-gray-100">
+                    <div className="pt-2 border-t border-gray-100 dark:border-slate-800">
                       <button
                         onClick={() => {
                           setTheme('system');
                           alert('Appearance settings reset to default');
                         }}
-                        className="flex items-center text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+                        className="flex items-center text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
                       >
                         <span className="mr-2 text-lg">🔄</span>
                         Reset to Default
@@ -498,14 +499,14 @@ const AdminDashboard = () => {
               {/* Quick Actions Sidebar */}
               <div className="space-y-6">
                 {/* Data Management */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100 dark:border-slate-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                      <div className="h-10 w-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
                         <span className="text-xl">💾</span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">Data Management</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Data Management</h3>
                       </div>
                     </div>
                   </div>
@@ -544,29 +545,29 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* System Info */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">System Information</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
+                  <h3 className="text-sm font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4">System Information</h3>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-sm text-gray-600">Version</span>
-                      <span className="text-sm font-semibold text-gray-900">1.0.0</span>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
+                      <span className="text-sm text-gray-600 dark:text-slate-400">Version</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">1.0.0</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-sm text-gray-600">Database</span>
-                      <span className="text-sm font-semibold text-gray-900">SQLite</span>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
+                      <span className="text-sm text-gray-600 dark:text-slate-400">Database</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">SQLite</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
-                      <span className="text-sm text-gray-600">Last Updated</span>
-                      <span className="text-sm font-semibold text-gray-900">Today</span>
+                      <span className="text-sm text-gray-600 dark:text-slate-400">Last Updated</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">Today</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Danger Zone */}
-                <div className="bg-red-50 rounded-2xl border-2 border-red-200 p-6">
+                <div className="bg-red-50 dark:bg-red-900/10 rounded-2xl border-2 border-red-200 dark:border-red-900/30 p-6">
                   <div className="flex items-center space-x-2 mb-4">
                     <span className="text-xl">⚠️</span>
-                    <h3 className="text-sm font-bold text-red-900 uppercase tracking-wider">Danger Zone</h3>
+                    <h3 className="text-sm font-bold text-red-900 dark:text-red-400 uppercase tracking-wider">Danger Zone</h3>
                   </div>
                   <button className="w-full px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-semibold shadow-md hover:shadow-lg">
                     Reset All Settings
@@ -583,7 +584,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="h-screen flex bg-slate-50 overflow-hidden font-sans">
+    <div className="h-screen flex bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-200">
       <Sidebar
         items={sidebarItems}
         activeSection={activeSection}
@@ -596,27 +597,27 @@ const AdminDashboard = () => {
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 flex-shrink-0 z-10">
+        <div className="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 flex items-center justify-between px-8 flex-shrink-0 z-10 transition-colors duration-200">
           <div className="flex items-center">
             <button
-              className="md:hidden mr-4 p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors shadow-sm"
+              className="md:hidden mr-4 p-2 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-700 dark:hover:text-slate-200 transition-colors shadow-sm"
               onClick={() => setIsSidebarOpen(true)}
             >
               <Menu className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white tracking-tight">
                 {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
               </h2>
-              <p className="text-sm text-gray-500 mt-0.5">Welcome back, {user?.name}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Welcome back, {user?.name}</p>
             </div>
           </div>
           <div className="flex items-center space-x-6">
             <div className="flex flex-col items-end">
-              <span className="text-sm font-bold text-gray-700">
+              <span className="text-sm font-bold text-gray-700 dark:text-slate-200">
                 {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-slate-400">
                 {new Date().toLocaleDateString('en-US', {
                   weekday: 'long',
                   month: 'long',
@@ -624,14 +625,16 @@ const AdminDashboard = () => {
                 })}
               </span>
             </div>
+
+            {/* Notification Bell */}
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="h-10 w-10 bg-white rounded-full flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors relative"
+                className="h-10 w-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors relative"
               >
                 <span className="text-xl">🔔</span>
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm">
                     {unreadCount}
                   </span>
                 )}
@@ -639,13 +642,13 @@ const AdminDashboard = () => {
 
               {/* Notification Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                  <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                    <h3 className="font-semibold text-gray-900">Notifications</h3>
+                <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                  <div className="p-4 border-b border-gray-50 dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
                     {notifications.length > 0 && (
                       <button
                         onClick={handleClearNotifications}
-                        className="text-xs text-red-600 hover:text-red-700 font-medium hover:underline"
+                        className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium hover:underline"
                       >
                         Clear All
                       </button>
@@ -654,23 +657,23 @@ const AdminDashboard = () => {
 
                   <div className="max-h-[400px] overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <div className="p-8 text-center text-gray-500">
+                      <div className="p-8 text-center text-gray-500 dark:text-slate-400">
                         <span className="text-2xl block mb-2">🔕</span>
                         <p className="text-sm">No new notifications</p>
                       </div>
                     ) : (
-                      <div className="divide-y divide-gray-50">
+                      <div className="divide-y divide-gray-50 dark:divide-slate-700">
                         {notifications.map((notification) => (
-                          <div key={notification.id} className={`p-4 hover:bg-gray-50 transition-colors relative group ${notification.unread ? 'bg-blue-50/30' : ''}`}>
+                          <div key={notification.id} className={`p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors relative group ${notification.unread ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}>
                             <div className="flex justify-between items-start mb-1">
-                              <h4 className={`text-sm font-medium ${notification.type === 'warning' ? 'text-amber-700' : notification.type === 'error' ? 'text-red-700' : 'text-gray-900'}`}>
+                              <h4 className={`text-sm font-medium ${notification.type === 'warning' ? 'text-amber-700 dark:text-amber-400' : notification.type === 'error' ? 'text-red-700 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
                                 {notification.title}
                               </h4>
-                              <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                              <span className="text-[10px] text-gray-400 dark:text-slate-500 whitespace-nowrap ml-2">
                                 {calculateTimeAgo(notification.time)}
                               </span>
                             </div>
-                            <p className="text-xs text-gray-600 leading-relaxed pr-6">
+                            <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed pr-6">
                               {notification.message}
                             </p>
                             <button
@@ -678,7 +681,7 @@ const AdminDashboard = () => {
                                 e.stopPropagation();
                                 handleDeleteNotification(notification.id);
                               }}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
                               title="Dismiss"
                             >
                               <X className="h-4 w-4" />

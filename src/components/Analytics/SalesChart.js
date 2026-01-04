@@ -3,23 +3,23 @@ import React from 'react';
 const SalesChart = ({ data, title = "Sales Overview" }) => {
   // Simple chart implementation without recharts dependency
   const maxValue = Math.max(...data.map(item => item.sales));
-  
+
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow dark:shadow-none border border-transparent dark:border-slate-800 p-6 transition-colors">
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{title}</h3>
       <div className="h-80 flex items-end space-x-2">
         {data.map((item, index) => (
           <div key={index} className="flex-1 flex flex-col items-center">
-            <div 
+            <div
               className="w-full bg-blue-500 rounded-t"
-              style={{ 
+              style={{
                 height: `${(item.sales / maxValue) * 100}%`,
                 minHeight: '4px'
               }}
             />
-            <div className="text-xs text-gray-600 mt-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-slate-400 mt-2 text-center">
               <div>{item.date}</div>
-              <div className="font-semibold">LKR {item.sales.toLocaleString()}</div>
+              <div className="font-semibold text-gray-900 dark:text-slate-200">LKR {item.sales.toLocaleString()}</div>
             </div>
           </div>
         ))}
