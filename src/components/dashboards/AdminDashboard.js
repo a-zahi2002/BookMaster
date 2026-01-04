@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBooks } from '../../contexts/BookContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import Sidebar from '../common/Sidebar';
 import EnhancedInventory from '../EnhancedInventory';
 import UserManagement from '../UserManagement';
@@ -13,13 +14,85 @@ import { Menu, X, CheckCircle } from 'lucide-react';
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const { books, getBooks } = useBooks();
+  const { theme, setTheme } = useTheme();
   const [activeSection, setActiveSection] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
+  const [lastBackup, setLastBackup] = useState(null);
+  const [notificationSettings, setNotificationSettings] = useState({
+    email: true,
+    lowStock: true,
+    sales: false,
+    updates: true
+  });
+
+  // Notification System State
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'System Backup Successful', message: 'Daily backup completed successfully.', time: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), unread: true, type: 'success' },
+    { id: 2, title: 'Low Stock Alert', message: 'The Great Gatsby is running low on stock.', time: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), unread: true, type: 'warning' },
+    { id: 3, title: 'New User Registered', message: 'Sarah James has been added as a cashier.', time: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), unread: false, type: 'info' }
+  ]);
+
+  const handleDeleteNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleClearNotifications = () => {
+    setNotifications([]);
+  };
+
+  const unreadCount = notifications.filter(n => n.unread).length;
 
   useEffect(() => {
     getBooks();
+    fetchSystemData();
+    loadSettings();
   }, []);
+
+  const fetchSystemData = async () => {
+    try {
+      if (window.electronAPI) {
+        // Fetch backup history
+        const backups = await window.electronAPI.getBackupHistory();
+        if (backups && backups.length > 0) {
+          // Sort by date desc (assuming backups have created_at or timestamp)
+          const sorted = backups.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          setLastBackup(sorted[0].created_at);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching system data:', error);
+    }
+  };
+
+  const loadSettings = () => {
+    const saved = localStorage.getItem('notificationSettings');
+    if (saved) {
+      setNotificationSettings(JSON.parse(saved));
+    }
+  };
+
+  const handleNotificationToggle = (key) => {
+    const newSettings = { ...notificationSettings, [key]: !notificationSettings[key] };
+    setNotificationSettings(newSettings);
+    localStorage.setItem('notificationSettings', JSON.stringify(newSettings));
+
+    // Simulate saving preference to backend if needed
+    // alert(`Notification setting '${key}' updated to ${!notificationSettings[key]}`);
+  };
+
+  const calculateTimeAgo = (dateString) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours === 1) return '1h Ago';
+    if (diffInHours < 24) return `${diffInHours}h Ago`;
+    return date.toLocaleDateString();
+  };
 
   const sidebarItems = [
     { id: 'home', label: 'System Overview', icon: '🏠' },
@@ -32,12 +105,14 @@ const AdminDashboard = () => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
+  /* ... handlers for backup/export ... */
   const handleBackup = async () => {
     try {
       if (window.electronAPI) {
         const result = await window.electronAPI.createManualBackup();
         if (result.success) {
           alert('Backup created successfully!');
+          fetchSystemData(); // Refresh info
         } else {
           alert('Backup failed: ' + (result.error || 'Unknown error'));
         }
@@ -47,6 +122,7 @@ const AdminDashboard = () => {
       alert('Error creating backup: ' + error.message);
     }
   };
+
 
   const handleExportData = async () => {
     try {
@@ -200,15 +276,15 @@ const AdminDashboard = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-500 uppercase tracking-wider truncate">Last Backup</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">2h Ago</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mt-2">{calculateTimeAgo(lastBackup)}</h3>
                   </div>
                   <div className="h-10 w-10 bg-purple-50 rounded-xl flex items-center justify-center shrink-0 ml-3">
                     <span className="text-purple-600 text-lg">☁️</span>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 flex items-center">
-                  <span className="text-purple-600 font-medium mr-2">Next:</span>
-                  Scheduled in 22h
+                  <span className="text-purple-600 font-medium mr-2">Latest:</span>
+                  {lastBackup ? new Date(lastBackup).toLocaleString() : 'No backups found'}
                 </p>
               </div>
             </div>
@@ -298,10 +374,10 @@ const AdminDashboard = () => {
                   </div>
                   <div className="p-6 space-y-4">
                     {[
-                      { label: 'Email Notifications', desc: 'Receive updates via email', checked: true },
-                      { label: 'Low Stock Alerts', desc: 'Get notified when inventory is low', checked: true },
-                      { label: 'Sales Reports', desc: 'Daily sales summary emails', checked: false },
-                      { label: 'System Updates', desc: 'Notifications about new features', checked: true }
+                      { id: 'email', label: 'Email Notifications', desc: 'Receive updates via email' },
+                      { id: 'lowStock', label: 'Low Stock Alerts', desc: 'Get notified when inventory is low' },
+                      { id: 'sales', label: 'Sales Reports', desc: 'Daily sales summary emails' },
+                      { id: 'updates', label: 'System Updates', desc: 'Notifications about new features' }
                     ].map((setting, i) => (
                       <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors group">
                         <div className="flex-1">
@@ -309,7 +385,12 @@ const AdminDashboard = () => {
                           <p className="text-sm text-gray-500">{setting.desc}</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" defaultChecked={setting.checked} />
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={notificationSettings[setting.id]}
+                            onChange={() => handleNotificationToggle(setting.id)}
+                          />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                       </div>
@@ -366,23 +447,44 @@ const AdminDashboard = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-3">Theme Preference</label>
                       <div className="grid grid-cols-3 gap-3">
-                        <button className="flex flex-col items-center p-2 border-2 border-indigo-600 bg-indigo-50 rounded-lg transition-all">
+                        <button
+                          onClick={() => setTheme('light')}
+                          className={`flex flex-col items-center p-2 border-2 rounded-lg transition-all ${theme === 'light'
+                            ? 'border-indigo-600 bg-indigo-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
                           <div className="w-full h-8 bg-white border border-gray-200 rounded mb-2"></div>
-                          <span className="text-xs font-medium text-indigo-700">Light</span>
+                          <span className={`text-xs font-medium ${theme === 'light' ? 'text-indigo-700' : 'text-gray-600'}`}>Light</span>
                         </button>
-                        <button className="flex flex-col items-center p-2 border border-gray-200 hover:border-gray-300 rounded-lg transition-all">
+                        <button
+                          onClick={() => setTheme('dark')}
+                          className={`flex flex-col items-center p-2 border-2 rounded-lg transition-all ${theme === 'dark'
+                            ? 'border-indigo-600 bg-indigo-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
                           <div className="w-full h-8 bg-gray-900 rounded mb-2"></div>
-                          <span className="text-xs font-medium text-gray-600">Dark</span>
+                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-indigo-700' : 'text-gray-600'}`}>Dark</span>
                         </button>
-                        <button className="flex flex-col items-center p-2 border border-gray-200 hover:border-gray-300 rounded-lg transition-all">
+                        <button
+                          onClick={() => setTheme('system')}
+                          className={`flex flex-col items-center p-2 border-2 rounded-lg transition-all ${theme === 'system'
+                            ? 'border-indigo-600 bg-indigo-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                        >
                           <div className="w-full h-8 bg-gradient-to-br from-white to-gray-900 border border-gray-200 rounded mb-2"></div>
-                          <span className="text-xs font-medium text-gray-600">System</span>
+                          <span className={`text-xs font-medium ${theme === 'system' ? 'text-indigo-700' : 'text-gray-600'}`}>System</span>
                         </button>
                       </div>
                     </div>
                     <div className="pt-2 border-t border-gray-100">
                       <button
-                        onClick={() => alert('Appearance settings reset to default')}
+                        onClick={() => {
+                          setTheme('system');
+                          alert('Appearance settings reset to default');
+                        }}
                         className="flex items-center text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
                       >
                         <span className="mr-2 text-lg">🔄</span>
@@ -522,8 +624,72 @@ const AdminDashboard = () => {
                 })}
               </span>
             </div>
-            <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200">
-              <span className="text-xl">🔔</span>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="h-10 w-10 bg-white rounded-full flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors relative"
+              >
+                <span className="text-xl">🔔</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                  <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                    <h3 className="font-semibold text-gray-900">Notifications</h3>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={handleClearNotifications}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium hover:underline"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        <span className="text-2xl block mb-2">🔕</span>
+                        <p className="text-sm">No new notifications</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-50">
+                        {notifications.map((notification) => (
+                          <div key={notification.id} className={`p-4 hover:bg-gray-50 transition-colors relative group ${notification.unread ? 'bg-blue-50/30' : ''}`}>
+                            <div className="flex justify-between items-start mb-1">
+                              <h4 className={`text-sm font-medium ${notification.type === 'warning' ? 'text-amber-700' : notification.type === 'error' ? 'text-red-700' : 'text-gray-900'}`}>
+                                {notification.title}
+                              </h4>
+                              <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                                {calculateTimeAgo(notification.time)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600 leading-relaxed pr-6">
+                              {notification.message}
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteNotification(notification.id);
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Dismiss"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

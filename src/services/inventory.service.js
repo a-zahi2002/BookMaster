@@ -427,6 +427,44 @@ class InventoryService {
             throw error;
         }
     }
+    /**
+     * Get inventory for POS (grouped by price variants)
+     */
+    async getPosInventory() {
+        try {
+            // Group by book and SELLING PRICE to show different price options
+            const inventory = await this.db.all(`
+                SELECT 
+                  b.id as book_id,
+                  b.title,
+                  b.author,
+                  b.isbn,
+                  b.category,
+                  ib.selling_price,
+                  SUM(ib.current_quantity) as stock_quantity
+                FROM inventory_batches ib
+                JOIN books b ON ib.book_id = b.id
+                WHERE ib.current_quantity > 0
+                GROUP BY b.id, ib.selling_price
+                ORDER BY b.title ASC
+            `);
+
+            // Format for frontend
+            return inventory.map(item => ({
+                id: `${item.book_id}-${item.selling_price}`, // Unique ID for React key
+                bookId: item.book_id,
+                title: item.title,
+                author: item.author,
+                isbn: item.isbn,
+                price: item.selling_price,
+                stock_quantity: item.stock_quantity,
+                category: item.category
+            }));
+        } catch (error) {
+            console.error('Error getting POS inventory:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = InventoryService;

@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const encryptionService = require('./encryption.service');
 const { v4: uuidv4 } = require('uuid');
 
 class UserManagementService {
@@ -73,7 +73,7 @@ class UserManagementService {
       );
 
       if (!existingAdmin) {
-        const hashedPassword = await bcrypt.hash('admin123', 10);
+        const hashedPassword = await encryptionService.hash('admin123');
         await this.db.run(
           `INSERT INTO users (uuid, username, password, role, name, email) 
            VALUES (?, ?, ?, ?, ?, ?)`,
@@ -89,7 +89,7 @@ class UserManagementService {
       );
 
       if (!existingManager) {
-        const hashedPassword = await bcrypt.hash('manager123', 10);
+        const hashedPassword = await encryptionService.hash('manager123');
         await this.db.run(
           `INSERT INTO users (uuid, username, password, role, name, email) 
            VALUES (?, ?, ?, ?, ?, ?)`,
@@ -105,7 +105,7 @@ class UserManagementService {
       );
 
       if (!existingCashier) {
-        const hashedPassword = await bcrypt.hash('cashier123', 10);
+        const hashedPassword = await encryptionService.hash('cashier123');
         await this.db.run(
           `INSERT INTO users (uuid, username, password, role, name, email) 
            VALUES (?, ?, ?, ?, ?, ?)`,
@@ -133,7 +133,7 @@ class UserManagementService {
       }
 
       // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await encryptionService.hash(password);
       const userUuid = uuidv4();
 
       // Insert new user
@@ -218,7 +218,7 @@ class UserManagementService {
 
   async resetPassword(userId, newPassword, resetBy) {
     try {
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword = await encryptionService.hash(newPassword);
 
       await this.db.run(
         'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -273,7 +273,7 @@ class UserManagementService {
         throw new Error('Account is disabled');
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await encryptionService.compare(password, user.password);
       if (!isValidPassword) {
         throw new Error('Invalid password');
       }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Search, Edit, Trash2, Package, History, DollarSign } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, History, DollarSign, PackagePlus } from 'lucide-react';
 import RegisterBookModal from './modals/RegisterBookModal';
 import RestockModal from './modals/RestockModal';
 import EditBookModal from './modals/EditBookModal';
@@ -83,23 +83,32 @@ const EnhancedInventory = () => {
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Enhanced Inventory Management</h1>
-          <button
-            onClick={handleRegister}
-            className="btn-primary"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Register New Book
-          </button>
-          {(user?.role === 'admin' || user?.role === 'manager') && books.length > 0 && (
+          <div className="flex items-center">
             <button
-              onClick={handleDeleteAll}
-              className="ml-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center font-medium shadow-sm"
-              title="Delete All Inventory"
+              onClick={() => handleRestock(null)}
+              className="btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 h-10 py-2 px-4 shadow-sm mr-3"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete All
+              <PackagePlus className="h-4 w-4 mr-2 text-blue-600" />
+              Update Stock
             </button>
-          )}
+            <button
+              onClick={handleRegister}
+              className="btn-primary shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Register New Book
+            </button>
+            {(user?.role === 'admin' || user?.role === 'manager') && books.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                className="btn bg-red-600 text-white hover:bg-red-700 h-10 py-2 px-4 ml-3 shadow-sm"
+                title="Delete All Inventory"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete All
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Enhanced Stats */}
@@ -303,7 +312,7 @@ const EnhancedInventory = () => {
       )}
 
       {/* Restock Modal */}
-      {showRestockModal && selectedBook && (
+      {showRestockModal && (
         <RestockModal
           book={selectedBook}
           onClose={() => {

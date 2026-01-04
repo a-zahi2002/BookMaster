@@ -144,7 +144,20 @@ class BackupService {
       const backupPath = path.join(this.backupDir, backupFileName);
 
       // Create database backup
-      await this.db.backup(backupPath);
+      // Use VACUUM INTO for thread-safe live backup (requires SQLite 3.27+)
+      // Escape backslashes for Windows paths in SQL string
+      const sanitizedPath = backupPath.replace(/\\/g, '\\\\');
+      try {
+        // Ensure file doesn't exist (VACUUM INTO requires target not to exist)
+        await fs.unlink(backupPath).catch(() => { });
+        await this.db.run(`VACUUM INTO '${sanitizedPath}'`);
+      } catch (bkError) {
+        console.error('VACUUM INTO failed, falling back to file copy:', bkError);
+        // Fallback: Flush WAL and copy file
+        await this.db.run('PRAGMA wal_checkpoint(TRUNCATE)');
+        const sourcePath = path.join(app.getPath('userData'), 'database.sqlite');
+        await fs.copyFile(sourcePath, backupPath);
+      }
 
       // Create logs backup
       const logsBackupPath = path.join(this.backupDir, `logs-${type}-${timestamp}.json`);

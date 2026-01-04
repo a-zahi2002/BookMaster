@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getInventory: () => ipcRenderer.invoke('get-inventory'),
   deleteBook: (id) => ipcRenderer.invoke('delete-book', id),
   getPriceHistory: (bookId) => ipcRenderer.invoke('get-price-history', bookId),
+  getPosInventory: () => ipcRenderer.invoke('get-pos-inventory'),
 
   // Backup Management
   createManualBackup: () => ipcRenderer.invoke('create-manual-backup'),

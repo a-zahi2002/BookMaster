@@ -1,15 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBooks } from '../contexts/BookContext';
 import { useCart } from '../contexts/CartContext';
 import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 
 const POSView = () => {
-  const { books } = useBooks();
+  const { books } = useBooks(); // Fallback source
   const { cart, addToCart, updateCartItem, removeFromCart, clearCart, processCheckout } = useCart();
   const [searchTerm, setSearchTerm] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [posBooks, setPosBooks] = useState([]);
 
-  const filteredBooks = books.filter(book =>
+  // Fetch specialized POS inventory (batches) or fallback to basic books
+  useEffect(() => {
+    const fetchMethods = async () => {
+      if (window.electronAPI && window.electronAPI.getPosInventory) {
+        try {
+          const inventory = await window.electronAPI.getPosInventory();
+          setPosBooks(inventory);
+        } catch (error) {
+          console.error("Failed to load POS inventory", error);
+          mapBooksToPos();
+        }
+      } else {
+        mapBooksToPos();
+      }
+    };
+
+    const mapBooksToPos = () => {
+      // Fallback: Use basic book list (one price per book)
+      setPosBooks(books.map(b => ({
+        id: `${b.id}-${b.price}`,
+        bookId: b.id,
+        title: b.title,
+        author: b.author,
+        isbn: b.isbn,
+        price: b.price,
+        stock_quantity: b.stock_quantity,
+        category: b.category
+      })));
+    };
+
+    fetchMethods();
+
+    // Refresh interval or event listener could be added here for real-time updates
+    // For now, relies on re-render or manual triggers
+  }, [books]);
+
+  const filteredBooks = posBooks.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.isbn.includes(searchTerm)
@@ -24,8 +61,13 @@ const POSView = () => {
     try {
       await processCheckout();
       alert('Sale completed successfully!');
+      // Refresh inventory after sale
+      if (window.electronAPI && window.electronAPI.getPosInventory) {
+        const inventory = await window.electronAPI.getPosInventory();
+        setPosBooks(inventory);
+      }
     } catch (error) {
-      alert('Checkout failed. Please try again.');
+      alert('Checkout failed: ' + error.message);
     } finally {
       setIsProcessing(false);
     }
@@ -63,17 +105,17 @@ const POSView = () => {
                     <span className="text-lg font-bold text-blue-600">
                       LKR {book.price.toLocaleString()}
                     </span>
-                    <span className="text-sm text-gray-500">
+                    <span className={`text-sm ${book.stock_quantity === 0 ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
                       Stock: {book.stock_quantity}
                     </span>
                   </div>
                   <button
-                    onClick={() => addToCart(book.id)}
+                    onClick={() => addToCart(book.bookId, 1, book.price, book.stock_quantity)}
                     disabled={book.stock_quantity === 0}
-                    className="btn-primary w-full"
+                    className="btn-primary w-full disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add to Cart
+                    {book.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                   </button>
                 </div>
               </div>
@@ -100,14 +142,15 @@ const POSView = () => {
           ) : (
             <div className="space-y-3">
               {cart.map((item) => (
-                <div key={item.bookId} className="bg-gray-50 rounded-lg p-3">
+                <div key={`${item.bookId}-${item.price}`} className="bg-gray-50 rounded-lg p-3">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900 text-sm">{item.title}</h4>
                       <p className="text-xs text-gray-600">{item.author}</p>
+                      <p className="text-xs text-blue-600 font-medium mt-1">@ LKR {item.price.toLocaleString()}</p>
                     </div>
                     <button
-                      onClick={() => removeFromCart(item.bookId)}
+                      onClick={() => removeFromCart(item.bookId, item.price)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -117,14 +160,14 @@ const POSView = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => updateCartItem(item.bookId, item.quantity - 1)}
+                        onClick={() => updateCartItem(item.bookId, item.quantity - 1, item.price)}
                         className="h-6 w-6 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
                       <button
-                        onClick={() => updateCartItem(item.bookId, item.quantity + 1)}
+                        onClick={() => updateCartItem(item.bookId, item.quantity + 1, item.price)}
                         className="h-6 w-6 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
                       >
                         <Plus className="h-3 w-3" />

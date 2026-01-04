@@ -300,6 +300,15 @@ ipcMain.handle('get-inventory', async () => {
     }
 });
 
+ipcMain.handle('get-pos-inventory', async () => {
+    try {
+        return await inventoryService.getPosInventory();
+    } catch (error) {
+        console.error('Database error:', error);
+        throw error;
+    }
+});
+
 ipcMain.handle('delete-book', async (event, id) => {
     try {
         const book = await db.get('SELECT title FROM books WHERE id = ?', [id]);

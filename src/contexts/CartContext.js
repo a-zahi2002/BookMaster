@@ -17,61 +17,66 @@ export const CartProvider = ({ children }) => {
     const { books, getBooks } = useBooks();
     const [cart, setCart] = useState([]);
 
-    const addToCart = (bookId, quantity = 1) => {
+    const addToCart = (bookId, quantity = 1, specificPrice = null, specificStock = null) => {
         const book = books.find(b => b.id === bookId);
         if (!book) return; // Book not found
 
-        // Check stock
-        if (book.stock_quantity < quantity) {
-            alert(`Insufficient stock. Only ${book.stock_quantity} available.`);
+        const price = specificPrice !== null ? specificPrice : book.price;
+        const maxStock = specificStock !== null ? specificStock : book.stock_quantity;
+
+        // Check stock for new quantity
+        if (maxStock < quantity) {
+            alert(`Insufficient stock. Only ${maxStock} available.`);
             return;
         }
 
-        const existingItem = cart.find(item => item.bookId === bookId);
-        if (existingItem) {
+        const existingItemIndex = cart.findIndex(item => item.bookId === bookId && item.price === price);
+
+        if (existingItemIndex > -1) {
+            const existingItem = cart[existingItemIndex];
             const newQuantity = existingItem.quantity + quantity;
-            if (newQuantity <= book.stock_quantity) {
-                setCart(prev => prev.map(item =>
-                    item.bookId === bookId
-                        ? { ...item, quantity: newQuantity }
-                        : item
-                ));
+
+            if (newQuantity <= maxStock) {
+                const newCart = [...cart];
+                newCart[existingItemIndex] = { ...existingItem, quantity: newQuantity };
+                setCart(newCart);
             } else {
-                alert(`Cannot add more. Stock limit of ${book.stock_quantity} reached.`);
+                alert(`Cannot add more. Stock limit of ${maxStock} reached.`);
             }
         } else {
             setCart(prev => [...prev, {
                 bookId: book.id,
                 title: book.title,
                 author: book.author,
-                price: book.price,
-                quantity: quantity
+                price: price,
+                quantity: quantity,
+                maxStock: maxStock
             }]);
         }
     };
 
-    const updateCartItem = (bookId, quantity) => {
+    const updateCartItem = (bookId, quantity, price) => {
         if (quantity <= 0) {
-            removeFromCart(bookId);
+            removeFromCart(bookId, price);
             return;
         }
 
-        const book = books.find(b => b.id === bookId);
-        if (!book) return;
+        const cartItem = cart.find(item => item.bookId === bookId && item.price === price);
+        if (!cartItem) return;
 
-        if (quantity <= book.stock_quantity) {
+        if (quantity <= cartItem.maxStock) {
             setCart(prev => prev.map(item =>
-                item.bookId === bookId
+                (item.bookId === bookId && item.price === price)
                     ? { ...item, quantity }
                     : item
             ));
         } else {
-            alert(`Cannot set quantity to ${quantity}. Only ${book.stock_quantity} in stock.`);
+            alert(`Cannot set quantity to ${quantity}. Only ${cartItem.maxStock} in stock.`);
         }
     };
 
-    const removeFromCart = (bookId) => {
-        setCart(prev => prev.filter(item => item.bookId !== bookId));
+    const removeFromCart = (bookId, price) => {
+        setCart(prev => prev.filter(item => !(item.bookId === bookId && item.price === price)));
     };
 
     const clearCart = () => {

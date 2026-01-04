@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useBooks } from '../contexts/BookContext';
-import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, PackagePlus } from 'lucide-react';
 import RegisterBookModal from '../components/modals/RegisterBookModal';
 import RestockModal from '../components/modals/RestockModal';
 import EditBookModal from '../components/modals/EditBookModal';
@@ -63,6 +63,13 @@ const InventoryView = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
           <div className="flex gap-3">
+            <button
+              onClick={() => handleUpdateStock(null)}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center shadow-sm"
+            >
+              <PackagePlus className="h-4 w-4 mr-2 text-blue-600" />
+              Update Stock
+            </button>
             <button
               onClick={handleRegisterNewBook}
               className="btn-primary flex items-center"
