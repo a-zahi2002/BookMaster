@@ -4,22 +4,40 @@ import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
 import BookModal from './BookModal';
 
 const InventoryView = () => {
+  /* State */
   const { books, deleteBook } = useBooks();
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // 'create', 'edit', 'restock'
   const [editingBook, setEditingBook] = useState(null);
 
+  /* ... filteredBooks logic ... */
   const filteredBooks = books.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.isbn.includes(searchTerm)
   );
 
-  const handleEdit = (book) => {
-    setEditingBook(book);
+  /* Handlers */
+  const handleAddBook = () => {
+    setEditingBook(null);
+    setModalMode('create');
     setShowModal(true);
   };
 
+  const handleEdit = (book) => {
+    setEditingBook(book);
+    setModalMode('edit');
+    setShowModal(true);
+  };
+
+  const handleRestock = (book) => {
+    setEditingBook(book);
+    setModalMode('restock');
+    setShowModal(true);
+  };
+
+  // ... delete logic ...
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this book?')) {
       try {
@@ -33,6 +51,7 @@ const InventoryView = () => {
   const handleModalClose = () => {
     setShowModal(false);
     setEditingBook(null);
+    setModalMode('create');
   };
 
   const lowStockBooks = books.filter(book => book.stock_quantity < 10);
@@ -43,13 +62,18 @@ const InventoryView = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleAddBook}
             className="btn-primary"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Book
+            Add New Book
           </button>
         </div>
+
+        {/* ... stats ... */}
+        {/* ... search ... */}
+
+        {/* I'll skip re-writing stats/search unless necessary, focusing on Table Actions and Modal call */}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -64,7 +88,7 @@ const InventoryView = () => {
               </div>
             </div>
           </div>
-
+          {/* ... other cards (Total Stock, Low Stock) ... */}
           <div className="card">
             <div className="card-content p-4">
               <div className="flex items-center">
@@ -111,21 +135,11 @@ const InventoryView = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Book Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ISBN
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Details</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ISBN</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -138,33 +152,34 @@ const InventoryView = () => {
                       <div className="text-xs text-gray-400">{book.publisher}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {book.isbn}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    LKR {book.price.toLocaleString()}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.isbn}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">LKR {book.price.toLocaleString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${book.stock_quantity < 10
-                        ? 'bg-red-100 text-red-800'
-                        : book.stock_quantity < 20
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${book.stock_quantity < 10 ? 'bg-red-100 text-red-800' :
+                        book.stock_quantity < 20 ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
                       }`}>
                       {book.stock_quantity}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
+                      {/* Restock Button */}
+                      <button onClick={() => handleRestock(book)} className="text-green-600 hover:text-green-900" title="Restock">
+                        <Plus className="h-4 w-4" />
+                      </button>
+
                       <button
                         onClick={() => handleEdit(book)}
                         className="text-blue-600 hover:text-blue-900"
+                        title="Edit Details"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(book.id)}
                         className="text-red-600 hover:text-red-900"
+                        title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -180,6 +195,7 @@ const InventoryView = () => {
       {showModal && (
         <BookModal
           book={editingBook}
+          mode={modalMode}
           onClose={handleModalClose}
         />
       )}

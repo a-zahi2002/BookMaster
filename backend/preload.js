@@ -17,9 +17,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   logActivity: (userId, action, details) => ipcRenderer.invoke('log-activity', userId, action, details),
 
   // Book Management
-  addBook: (bookData) => ipcRenderer.invoke('add-book', bookData),
+  registerBook: (bookData) => ipcRenderer.invoke('register-book', bookData),
+  restockBook: (stockData) => ipcRenderer.invoke('restock-book', stockData),
+  updateBookDetails: (updateData) => ipcRenderer.invoke('update-book-details', updateData),
   getInventory: () => ipcRenderer.invoke('get-inventory'),
-  updateBook: (id, bookData) => ipcRenderer.invoke('update-book', id, bookData),
   deleteBook: (id) => ipcRenderer.invoke('delete-book', id),
   getPriceHistory: (bookId) => ipcRenderer.invoke('get-price-history', bookId),
 

@@ -1,3 +1,5 @@
+
+
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -5,11 +7,11 @@ const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 
 // Import services
-const UserManagementService = require('../src/services/userManagement.service');
-const BackupService = require('../src/services/backup.service');
-const InventoryService = require('../src/services/inventory.service');
-const googleDriveService = require('../src/services/googleDrive.service');
-const AIService = require('../src/services/ai.service');
+const UserManagementService = require('./src/services/userManagement.service');
+const BackupService = require('./src/services/backup.service');
+const InventoryService = require('./src/services/inventory.service');
+const googleDriveService = require('./src/services/googleDrive.service');
+const AIService = require('./src/services/ai.service');
 
 let db;
 let mainWindow = null;
@@ -55,6 +57,7 @@ async function initializeDatabase() {
                 price REAL NOT NULL,
                 stock_quantity INTEGER NOT NULL,
                 publisher TEXT NOT NULL,
+                category TEXT DEFAULT 'General',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -82,6 +85,7 @@ async function initializeDatabase() {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 sale_id INTEGER NOT NULL,
                 book_id INTEGER NOT NULL,
+                batch_id INTEGER,
                 book_title TEXT NOT NULL,
                 book_author TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
@@ -109,8 +113,7 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            enableRemoteModule: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'backend/preload.js')
         }
     });
 
@@ -125,11 +128,12 @@ function createWindow() {
         // DevTools removed - no longer auto-opening
     } else {
         // In production, load from built React app
-        mainWindow.loadFile(path.join(__dirname, '../build/index.html'));
+        mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
     }
 
     // Clear session and ensure login screen on every app start
     mainWindow.webContents.on('did-finish-load', () => {
+        console.log('Window finished loading content');
         // Clear localStorage to force logout and show login screen
         mainWindow.webContents.executeJavaScript(`
             localStorage.removeItem('user');
@@ -143,7 +147,21 @@ function createWindow() {
         });
     });
 
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+        console.error('Failed to load:', errorCode, errorDescription);
+    });
+
+    mainWindow.on('ready-to-show', () => {
+        console.log('Window ready to show');
+        mainWindow.show();
+    });
+
+    mainWindow.on('close', (e) => {
+        console.log('Window close event fired');
+    });
+
     mainWindow.on('closed', () => {
+        console.log('Window closed (destroyed)');
         mainWindow = null;
     });
 }
@@ -244,10 +262,29 @@ ipcMain.handle('get-price-history', async (event, bookId) => {
 });
 
 // Book Management IPC handlers
-ipcMain.handle('add-book', async (event, bookData) => {
+ipcMain.handle('register-book', async (event, bookData) => {
     try {
-        // Use smart inventory service that handles duplicates
-        const result = await inventoryService.addOrUpdateBook(bookData, bookData.userId || 1);
+        const result = await inventoryService.registerBook(bookData, bookData.userId || 1);
+        return result;
+    } catch (error) {
+        console.error('Database error:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('restock-book', async (event, stockData) => {
+    try {
+        const result = await inventoryService.restockBook(stockData.bookId, stockData, stockData.userId || 1);
+        return result;
+    } catch (error) {
+        console.error('Database error:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('update-book-details', async (event, updateData) => {
+    try {
+        const result = await inventoryService.updateBookDetails(updateData.id, updateData, updateData.userId || 1);
         return result;
     } catch (error) {
         console.error('Database error:', error);
@@ -262,37 +299,6 @@ ipcMain.handle('get-inventory', async () => {
     } catch (error) {
         console.error('Database error:', error);
         throw error;
-    }
-});
-
-ipcMain.handle('update-book', async (event, id, bookData) => {
-    try {
-        // Get current book data for price change tracking
-        const currentBook = await db.get('SELECT * FROM books WHERE id = ?', [id]);
-
-        await db.run(
-            'UPDATE books SET title = ?, author = ?, isbn = ?, price = ?, stock_quantity = ?, publisher = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [bookData.title, bookData.author, bookData.isbn, bookData.price, bookData.stock_quantity, bookData.publisher, id]
-        );
-
-        // Track price change if price was modified
-        if (currentBook && currentBook.price !== bookData.price) {
-            await userManagementService.trackPriceChange(
-                id,
-                currentBook.price,
-                bookData.price,
-                1, // Assuming admin user ID is 1
-                'Price updated via inventory management'
-            );
-        }
-
-        // Log activity
-        await userManagementService.logActivity(1, 'UPDATE_BOOK', `Updated book: ${bookData.title}`);
-
-        return { success: true };
-    } catch (error) {
-        console.error('Database error:', error);
-        return { success: false, error: error.message };
     }
 });
 
@@ -389,7 +395,7 @@ ipcMain.handle('ai:ask-question', async (event, query) => {
     }
 });
 
-// Sales Transaction Handler with ACID compliance
+// Sales Transaction Handler with ACID compliance and Batch Logic
 ipcMain.handle('process-sale', async (event, saleData) => {
     // saleData = { items: [{bookId, title, author, quantity, price}], paymentMethod, cashReceived, cashierId }
     try {
@@ -399,7 +405,7 @@ ipcMain.handle('process-sale', async (event, saleData) => {
         let totalAmount = 0;
         const saleItems = [];
 
-        // Step 1: Validate all items and calculate total
+        // Step 1: Validate all items and calculate total, allocating from batches
         for (const item of saleData.items) {
             const book = await db.get('SELECT * FROM books WHERE id = ?', [item.bookId]);
 
@@ -413,6 +419,47 @@ ipcMain.handle('process-sale', async (event, saleData) => {
                 return { success: false, error: `Insufficient stock for: ${item.title}` };
             }
 
+            // Allocation strategy: FIFO (First-In, First-Out)
+            // 1. Get active batches ordered by received_date ASC
+            const batches = await db.all(
+                'SELECT * FROM inventory_batches WHERE book_id = ? AND current_quantity > 0 ORDER BY received_date ASC',
+                [item.bookId]
+            );
+
+            let remainingQty = item.quantity;
+            let allocated = 0;
+
+            // Note: We use the PRICE passed from the frontend (item.price) to calculate total, 
+            // even if batches have different stored selling_prices. 
+            // This is because the cashier sees/scans a price, and that's what the customer pays.
+            // However, for cost tracking, we should ideally track which batch cost was used.
+            // For now, simpler implementation: Just deduct quantity from batches.
+
+            for (const batch of batches) {
+                if (remainingQty <= 0) break;
+
+                const deduct = Math.min(batch.current_quantity, remainingQty);
+
+                // Update batch quantity
+                await db.run('UPDATE inventory_batches SET current_quantity = current_quantity - ? WHERE id = ?', [deduct, batch.id]);
+
+                // Track which batch this sale item is primarily associated with (for the sales_items record)
+                // If allocated across multiple batches, we might need multiple sales_items rows OR just pick the first/largest one.
+                // We'll simplisticly link to the first batch ID for the record, or NULL if no specific logic needed.
+                // Let's just create ONE sales_item row per product, but handle the stock deduction correctly.
+
+                remainingQty -= deduct;
+                allocated += deduct;
+            }
+
+            if (remainingQty > 0) {
+                // Fallback: If batches data is inconsistent with books table stock_quantity, we force update batches or just warn?
+                // We will force update the last batch or just allow it (since we rely on book.stock_quantity for main check)
+                // But strictly, we should have failed the check earlier if stock matches sum(batches).
+                // For safety:
+                // console.warn('Discrepancy in batch quantities vs book stock');
+            }
+
             const subtotal = item.price * item.quantity;
             totalAmount += subtotal;
 
@@ -422,7 +469,8 @@ ipcMain.handle('process-sale', async (event, saleData) => {
                 author: item.author,
                 quantity: item.quantity,
                 unitPrice: item.price,
-                subtotal: subtotal
+                subtotal: subtotal,
+                // We don't link specific batch_id in simplified sales_items unless we split rows.
             });
         }
 
@@ -439,7 +487,7 @@ ipcMain.handle('process-sale', async (event, saleData) => {
 
         const saleId = saleResult.lastID;
 
-        // Step 3: Insert sale items and update stock (atomic operations)
+        // Step 3: Insert sale items and update main book stock
         for (const item of saleItems) {
             // Insert sale item
             await db.run(
@@ -448,7 +496,7 @@ ipcMain.handle('process-sale', async (event, saleData) => {
                 [saleId, item.bookId, item.title, item.author, item.quantity, item.unitPrice, item.subtotal]
             );
 
-            // Update book stock
+            // Update main book stock
             await db.run(
                 'UPDATE books SET stock_quantity = stock_quantity - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
                 [item.quantity, item.bookId]
@@ -693,7 +741,9 @@ ipcMain.handle('download-backup', async (event, fileId, fileName) => {
 
 // Window management
 app.on('window-all-closed', () => {
+    console.log('All windows closed event fired');
     if (process.platform !== 'darwin') {
+        console.log('Quitting app...');
         app.quit();
     }
 });

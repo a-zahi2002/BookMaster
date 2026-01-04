@@ -69,44 +69,51 @@ export const BookProvider = ({ children }) => {
         }
     };
 
-    const addBook = async (bookData) => {
+    const registerBook = async (bookData) => {
         try {
             if (isElectron && window.electronAPI) {
-                const result = await window.electronAPI.addBook(bookData);
-                if (result.success) {
-                    await getBooks();
-                }
+                const result = await window.electronAPI.registerBook(bookData);
+                if (result.success) await getBooks();
                 return result;
             } else {
-                const newBook = {
-                    id: Date.now(),
-                    ...bookData
-                };
+                // Mock behavior
+                const newBook = { id: Date.now(), ...bookData };
                 setBooks(prev => [...prev, newBook]);
                 return { success: true, id: newBook.id };
             }
         } catch (error) {
-            console.error('Error adding book:', error);
+            console.error('Error registering book:', error);
             throw error;
         }
     };
 
-    const updateBook = async (id, bookData) => {
+    const restockBook = async (stockData) => {
         try {
             if (isElectron && window.electronAPI) {
-                const result = await window.electronAPI.updateBook(id, bookData);
-                if (result.success) {
-                    await getBooks();
-                }
+                const result = await window.electronAPI.restockBook(stockData);
+                if (result.success) await getBooks();
                 return result;
-            } else {
-                setBooks(prev => prev.map(book =>
-                    book.id === id ? { ...book, ...bookData } : book
-                ));
-                return { success: true };
             }
+            // Mock behavior
+            return { success: true };
         } catch (error) {
-            console.error('Error updating book:', error);
+            console.error('Error restocking book:', error);
+            throw error;
+        }
+    };
+
+    const updateBookDetails = async (updateData) => {
+        try {
+            if (isElectron && window.electronAPI) {
+                const result = await window.electronAPI.updateBookDetails(updateData);
+                if (result.success) await getBooks();
+                return result;
+            }
+            // Mock
+            setBooks(prev => prev.map(book => book.id === updateData.id ? { ...book, ...updateData } : book));
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating book details:', error);
             throw error;
         }
     };
@@ -138,8 +145,9 @@ export const BookProvider = ({ children }) => {
         books,
         loading,
         getBooks,
-        addBook,
-        updateBook,
+        registerBook,
+        restockBook,
+        updateBookDetails,
         deleteBook
     };
 

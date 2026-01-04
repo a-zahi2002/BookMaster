@@ -33,12 +33,14 @@ class InventoryService {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           book_id INTEGER NOT NULL,
           batch_number TEXT,
-          quantity INTEGER NOT NULL,
-          purchase_price REAL,
-          selling_price REAL,
-          supplier TEXT,
           received_date DATETIME DEFAULT CURRENT_TIMESTAMP,
           expiry_date DATETIME,
+          cost_price REAL,
+          selling_price REAL NOT NULL,
+          initial_quantity INTEGER NOT NULL,
+          current_quantity INTEGER NOT NULL,
+          supplier TEXT,
+          status TEXT DEFAULT 'ACTIVE',
           created_by INTEGER NOT NULL,
           FOREIGN KEY(book_id) REFERENCES books(id),
           FOREIGN KEY(created_by) REFERENCES users(id)
@@ -52,134 +54,140 @@ class InventoryService {
     }
 
     /**
-     * Smart add book - checks for duplicates by ISBN (if available) or Title+Author
-     * Handles both international books (with ISBN) and local books (without ISBN)
+     * Register a new book (Catalogue + Initial Stock)
      */
-    async addOrUpdateBook(bookData, userId) {
+    async registerBook(bookData, userId) {
         try {
-            const { title, author, isbn, price, stock_quantity, publisher, notes } = bookData;
+            const { title, author, isbn, price, costPrice, stock_quantity, publisher, category, notes } = bookData;
 
+            // Check if book exists
             let existingBook = null;
-            let matchedBy = null;
-
-            // Strategy 1: Check by ISBN if provided
             if (isbn && isbn.trim() !== '') {
-                existingBook = await this.db.get(
-                    'SELECT * FROM books WHERE isbn = ? AND isbn != ""',
-                    [isbn.trim()]
-                );
-                if (existingBook) {
-                    matchedBy = 'ISBN';
-                }
+                existingBook = await this.db.get('SELECT id FROM books WHERE isbn = ?', [isbn.trim()]);
             }
-
-            // Strategy 2: If no ISBN match, check by Title + Author (for local books)
             if (!existingBook && title && author) {
                 existingBook = await this.db.get(
-                    'SELECT * FROM books WHERE LOWER(TRIM(title)) = LOWER(TRIM(?)) AND LOWER(TRIM(author)) = LOWER(TRIM(?))',
+                    'SELECT id FROM books WHERE LOWER(title) = LOWER(?) AND LOWER(author) = LOWER(?)',
                     [title, author]
                 );
-                if (existingBook) {
-                    matchedBy = 'Title and Author';
-                }
             }
 
             if (existingBook) {
-                // Book exists - update stock
-                const oldQuantity = existingBook.stock_quantity;
-                const newQuantity = oldQuantity + stock_quantity;
-
-                // Update book stock
-                await this.db.run(
-                    'UPDATE books SET stock_quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                    [newQuantity, existingBook.id]
-                );
-
-                // Record stock movement
-                await this.recordStockMovement({
-                    bookId: existingBook.id,
-                    movementType: 'RESTOCK',
-                    quantityChange: stock_quantity,
-                    quantityBefore: oldQuantity,
-                    quantityAfter: newQuantity,
-                    unitPrice: price,
-                    totalValue: price * stock_quantity,
-                    notes: notes || `Restocked ${stock_quantity} units`,
-                    createdBy: userId
-                });
-
-                // Create inventory batch
-                await this.createInventoryBatch({
-                    bookId: existingBook.id,
-                    quantity: stock_quantity,
-                    purchasePrice: price,
-                    sellingPrice: price,
-                    createdBy: userId
-                });
-
-                // Log activity
-                await this.userManagementService.logActivity(
-                    userId,
-                    'RESTOCK_BOOK',
-                    `Restocked "${title}" (matched by ${matchedBy}) - Added ${stock_quantity} units (${oldQuantity} → ${newQuantity})`
-                );
-
-                return {
-                    success: true,
-                    action: 'updated',
-                    bookId: existingBook.id,
-                    matchedBy,
-                    message: `Book already exists (matched by ${matchedBy}). Stock updated from ${oldQuantity} to ${newQuantity} units.`,
-                    oldQuantity,
-                    newQuantity
-                };
-            } else {
-                // New book - insert
-                const result = await this.db.run(
-                    'INSERT INTO books (title, author, isbn, price, stock_quantity, publisher) VALUES (?, ?, ?, ?, ?, ?)',
-                    [title, author, isbn || '', price, stock_quantity, publisher]
-                );
-
-                const bookId = result.lastID;
-
-                // Record initial stock movement
-                await this.recordStockMovement({
-                    bookId,
-                    movementType: 'INITIAL_STOCK',
-                    quantityChange: stock_quantity,
-                    quantityBefore: 0,
-                    quantityAfter: stock_quantity,
-                    unitPrice: price,
-                    totalValue: price * stock_quantity,
-                    notes: notes || `Initial stock entry`,
-                    createdBy: userId
-                });
-
-                // Create inventory batch
-                await this.createInventoryBatch({
-                    bookId,
-                    quantity: stock_quantity,
-                    purchasePrice: price,
-                    sellingPrice: price,
-                    createdBy: userId
-                });
-
-                // Log activity
-                await this.userManagementService.logActivity(
-                    userId,
-                    'ADD_BOOK',
-                    `Added new book: "${title}" with ${stock_quantity} units`
-                );
-
-                return {
-                    success: true,
-                    action: 'created',
-                    bookId,
-                    message: `New book added successfully with ${stock_quantity} units.`
-                };
+                throw new Error('Book already exists. Please use "Restock" to add inventory.');
             }
+
+            await this.db.run('BEGIN TRANSACTION');
+
+            // 1. Create Book
+            const result = await this.db.run(
+                'INSERT INTO books (title, author, isbn, price, stock_quantity, publisher, category) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [title, author, isbn || '', price, stock_quantity, publisher, category || 'General']
+            );
+            const bookId = result.lastID;
+
+            // 2. Create Initial Batch
+            await this.createInventoryBatch({
+                bookId,
+                quantity: stock_quantity,
+                costPrice: costPrice || 0,
+                sellingPrice: price,
+                createdBy: userId
+            });
+
+            // 3. Record Movement
+            await this.recordStockMovement({
+                bookId,
+                movementType: 'INITIAL_STOCK',
+                quantityChange: stock_quantity,
+                quantityBefore: 0,
+                quantityAfter: stock_quantity,
+                unitPrice: costPrice || 0,
+                notes: notes || 'Initial registration',
+                createdBy: userId
+            });
+
+            await this.userManagementService.logActivity(userId, 'REGISTER_BOOK', `Registered "${title}"`);
+            await this.db.run('COMMIT');
+
+            return { success: true, bookId };
+
         } catch (error) {
-            console.error('Error in addOrUpdateBook:', error);
+            await this.db.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+    /**
+     * Restock existing book (New Batch)
+     */
+    async restockBook(bookId, stockData, userId) {
+        try {
+            const { quantity, costPrice, sellingPrice, supplier, expiryDate, notes } = stockData;
+            const book = await this.db.get('SELECT * FROM books WHERE id = ?', [bookId]);
+            if (!book) throw new Error('Book not found');
+
+            await this.db.run('BEGIN TRANSACTION');
+
+            // 1. Create Batch
+            await this.createInventoryBatch({
+                bookId,
+                quantity,
+                costPrice,
+                sellingPrice,
+                supplier,
+                expiryDate,
+                createdBy: userId
+            });
+
+            // 2. Update Book Totals
+            const newTotal = book.stock_quantity + quantity;
+            // Optionally update the main price to the new selling price?
+            // User requirement: "old transactions with old prices... same book with different prices"
+            // We KEEP the book price as is, OR update it to the LATEST price.
+            // Usually the 'books' table price is the 'current list price'.
+            // Let's update it so new labels get new price, but old batches retain their specific price.
+            await this.db.run(
+                'UPDATE books SET stock_quantity = ?, price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                [newTotal, sellingPrice, bookId]
+            );
+
+            // 3. Record Movement
+            await this.recordStockMovement({
+                bookId,
+                movementType: 'RESTOCK',
+                quantityChange: quantity,
+                quantityBefore: book.stock_quantity,
+                quantityAfter: newTotal,
+                unitPrice: costPrice,
+                notes,
+                createdBy: userId
+            });
+
+            await this.userManagementService.logActivity(userId, 'RESTOCK_BOOK', `Restocked "${book.title}" (+${quantity})`);
+            await this.db.run('COMMIT');
+
+            return { success: true, newTotal };
+        } catch (error) {
+            await this.db.run('ROLLBACK');
+            throw error;
+        }
+    }
+
+    /**
+     * Update Book Details (Metadata only)
+     */
+    async updateBookDetails(bookId, updateData, userId) {
+        try {
+            const { title, author, isbn, publisher, category } = updateData;
+
+            await this.db.run(
+                'UPDATE books SET title = ?, author = ?, isbn = ?, publisher = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                [title, author, isbn, publisher, category, bookId]
+            );
+
+            await this.userManagementService.logActivity(userId, 'UPDATE_BOOK_DETAILS', `Updated details for book ID ${bookId}`);
+            return { success: true };
+        } catch (error) {
             throw error;
         }
     }
@@ -235,23 +243,27 @@ class InventoryService {
                 bookId,
                 batchNumber,
                 quantity,
+                costPrice, // unified name
                 purchasePrice,
                 sellingPrice,
                 supplier,
+                expiryDate,
                 createdBy
             } = batchData;
 
             await this.db.run(
                 `INSERT INTO inventory_batches 
-         (book_id, batch_number, quantity, purchase_price, selling_price, supplier, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          (book_id, batch_number, initial_quantity, current_quantity, cost_price, selling_price, supplier, expiry_date, created_by) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     bookId,
                     batchNumber || `BATCH-${Date.now()}`,
                     quantity,
-                    purchasePrice || null,
-                    sellingPrice || null,
+                    quantity, // current starts equal to initial
+                    purchasePrice || costPrice || 0, // Handle different param names
+                    sellingPrice || 0,
                     supplier || null,
+                    expiryDate || null,
                     createdBy
                 ]
             );

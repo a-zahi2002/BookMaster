@@ -2,7 +2,7 @@
   "name": "bookmaster-pos",
   "version": "1.0.0",
   "private": true,
-  "main": "electron/main.js",
+  "main": "main.js",
   "homepage": "./",
   "description": "BookMaster POS System",
   "author": "BookMaster Team",
@@ -11,7 +11,7 @@
     "productName": "BookMaster POS",
     "files": [
       "build/**/*",
-      "electron/**/*",
+      "backend/**/*",
       "data/**/*",
       "src/services/**/*",
       "package.json"
@@ -24,7 +24,7 @@
     }
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "cross-env BROWSER=none react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "electron": "^39.2.7",
     "googleapis": "^169.0.0",
     "lucide-react": "^0.562.0",
     "node-cron": "^4.2.1",
@@ -52,6 +51,7 @@
     "autoprefixer": "^10.4.23",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
+    "electron": "^28.3.3",
     "electron-builder": "^26.0.12",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
