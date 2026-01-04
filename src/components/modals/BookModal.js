@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { useBooks } from '../../contexts/BookContext';
 import { X } from 'lucide-react';
 
-const BookModal = ({ book, mode = 'create', onClose }) => {
+const BookModal = ({ book, mode = 'register', onClose }) => {
   const { registerBook, updateBookDetails, restockBook } = useBooks();
 
   // Initial state logic
   const getInitialState = () => {
-    if (mode === 'restock') {
+    if (mode === 'update') {
       return {
         ...book, // keep book details for display
         quantity: '',
-        costPrice: book?.price ? (book.price * 0.7) : '', // estimate cost
+        costPrice: book?.price ? (book.price * 0.7).toFixed(2) : '', // estimate cost
         sellingPrice: book?.price || '',
         supplier: '',
         expiryDate: '',
@@ -46,7 +46,7 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
     setLoading(true);
 
     try {
-      if (mode === 'create') {
+      if (mode === 'register') {
         await registerBook({
           ...formData,
           price: parseFloat(formData.price),
@@ -62,7 +62,7 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
           publisher: formData.publisher,
           category: formData.category
         });
-      } else if (mode === 'restock') {
+      } else if (mode === 'update') {
         await restockBook({
           bookId: book.id,
           quantity: parseInt(formData.quantity),
@@ -77,7 +77,7 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
       onClose();
     } catch (error) {
       console.error('Error saving book:', error);
-      alert('Failed to save. Please try again.');
+      alert(error.message || 'Failed to save. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
   const getTitle = () => {
     switch (mode) {
       case 'edit': return 'Edit Book Details';
-      case 'restock': return 'Add Stock (Restock)';
+      case 'update': return 'Update Stock';
       default: return 'Register New Book';
     }
   };
@@ -108,16 +108,18 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* Read-Only Info for Restock */}
-          {mode === 'restock' && (
+          {/* Read-Only Info for Update Stock */}
+          {mode === 'update' && (
             <div className="bg-gray-50 p-3 rounded text-sm mb-4">
               <p><strong>Book:</strong> {book.title}</p>
+              <p><strong>Author:</strong> {book.author}</p>
               <p><strong>Current Stock:</strong> {book.stock_quantity}</p>
+              <p><strong>Current Price:</strong> LKR {book.price}</p>
             </div>
           )}
 
-          {/* Metadata Fields (Create/Edit) */}
-          {(mode === 'create' || mode === 'edit') && (
+          {/* Metadata Fields (Register/Edit) */}
+          {(mode === 'register' || mode === 'edit') && (
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
@@ -140,8 +142,8 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
             </>
           )}
 
-          {/* Initial Stock Fields (Create) */}
-          {mode === 'create' && (
+          {/* Initial Stock Fields (Register) */}
+          {mode === 'register' && (
             <div className="grid grid-cols-2 gap-4 border-t pt-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Initial Qty *</label>
@@ -154,8 +156,8 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
             </div>
           )}
 
-          {/* Restock Fields (Restock Only) */}
-          {mode === 'restock' && (
+          {/* Update Stock Fields (Update Only) */}
+          {mode === 'update' && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -188,7 +190,7 @@ const BookModal = ({ book, mode = 'create', onClose }) => {
           <div className="flex space-x-3 pt-4">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
             <button type="submit" disabled={loading} className="btn-primary flex-1">
-              {loading ? 'Saving...' : mode === 'create' ? 'Register Book' : mode === 'restock' ? 'Add Stock' : 'Update Details'}
+              {loading ? 'Saving...' : mode === 'register' ? 'Register Book' : mode === 'update' ? 'Update Stock' : 'Update Details'}
             </button>
           </div>
         </form>

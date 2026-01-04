@@ -8,10 +8,10 @@ const InventoryView = () => {
   const { books, deleteBook } = useBooks();
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create', 'edit', 'restock'
+  const [modalMode, setModalMode] = useState('register'); // 'register', 'update', 'edit'
   const [editingBook, setEditingBook] = useState(null);
 
-  /* ... filteredBooks logic ... */
+  /* Filtered books logic */
   const filteredBooks = books.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -19,9 +19,9 @@ const InventoryView = () => {
   );
 
   /* Handlers */
-  const handleAddBook = () => {
+  const handleRegisterNewBook = () => {
     setEditingBook(null);
-    setModalMode('create');
+    setModalMode('register');
     setShowModal(true);
   };
 
@@ -31,13 +31,12 @@ const InventoryView = () => {
     setShowModal(true);
   };
 
-  const handleRestock = (book) => {
+  const handleUpdateStock = (book) => {
     setEditingBook(book);
-    setModalMode('restock');
+    setModalMode('update');
     setShowModal(true);
   };
 
-  // ... delete logic ...
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this book?')) {
       try {
@@ -51,7 +50,7 @@ const InventoryView = () => {
   const handleModalClose = () => {
     setShowModal(false);
     setEditingBook(null);
-    setModalMode('create');
+    setModalMode('register');
   };
 
   const lowStockBooks = books.filter(book => book.stock_quantity < 10);
@@ -61,13 +60,15 @@ const InventoryView = () => {
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
-          <button
-            onClick={handleAddBook}
-            className="btn-primary"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Book
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleRegisterNewBook}
+              className="btn-primary flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Register New Book
+            </button>
+          </div>
         </div>
 
         {/* ... stats ... */}
@@ -156,16 +157,16 @@ const InventoryView = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">LKR {book.price.toLocaleString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${book.stock_quantity < 10 ? 'bg-red-100 text-red-800' :
-                        book.stock_quantity < 20 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
+                      book.stock_quantity < 20 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
                       }`}>
                       {book.stock_quantity}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      {/* Restock Button */}
-                      <button onClick={() => handleRestock(book)} className="text-green-600 hover:text-green-900" title="Restock">
+                      {/* Update Stock Button */}
+                      <button onClick={() => handleUpdateStock(book)} className="text-green-600 hover:text-green-900" title="Update Stock">
                         <Plus className="h-4 w-4" />
                       </button>
 
