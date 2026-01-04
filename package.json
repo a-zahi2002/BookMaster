@@ -29,8 +29,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "postinstall": "electron-builder install-app-deps",
-    "electron": "electron .",
-    "dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron": "node start_electron.js",
+    "dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development node start_electron.js\"",
     "electron-pack": "npm run build && electron .",
     "dist": "npm run build && electron-builder"
   },
@@ -45,13 +45,14 @@
     "react-scripts": "^5.0.1",
     "recharts": "^3.6.0",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.23",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "electron": "^28.3.3",
+    "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
