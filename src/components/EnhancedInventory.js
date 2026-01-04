@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useBooks } from '../contexts/BookContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Search, Edit, Trash2, Package, History, DollarSign } from 'lucide-react';
-import BookModal from './modals/BookModal';
+import RegisterBookModal from './modals/RegisterBookModal';
+import RestockModal from './modals/RestockModal';
+import EditBookModal from './modals/EditBookModal';
 
 const EnhancedInventory = () => {
   const { user } = useAuth();
-  const { books, deleteBook, updateBook } = useBooks();
+  const { books, deleteBook } = useBooks();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [editingBook, setEditingBook] = useState(null);
+
+  // Modal States
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showRestockModal, setShowRestockModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+
   const [showPriceHistory, setShowPriceHistory] = useState(false);
   const [selectedBookHistory, setSelectedBookHistory] = useState([]);
-  const [showStockModal, setShowStockModal] = useState(false);
-  const [stockUpdateBook, setStockUpdateBook] = useState(null);
-  const [stockQuantity, setStockQuantity] = useState('');
 
   const filteredBooks = books.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -23,8 +27,17 @@ const EnhancedInventory = () => {
   );
 
   const handleEdit = (book) => {
-    setEditingBook(book);
-    setShowModal(true);
+    setSelectedBook(book);
+    setShowEditModal(true);
+  };
+
+  const handleRestock = (book) => {
+    setSelectedBook(book);
+    setShowRestockModal(true);
+  };
+
+  const handleRegister = () => {
+    setShowRegisterModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -39,11 +52,9 @@ const EnhancedInventory = () => {
 
   const handleDeleteAll = async () => {
     if (books.length === 0) return;
-
-    if (window.confirm('WARNING: Are you sure you want to delete ALL books from inventory? This action cannot be undone.')) {
+    if (window.confirm('WARNING: Are you sure you want to delete ALL books from inventory?')) {
       if (window.confirm('Please confirm again: Delete ENTIRE inventory?')) {
         try {
-          // Process deletes sequentially to avoid database race conditions
           for (const book of books) {
             await deleteBook(book.id);
           }
@@ -52,41 +63,6 @@ const EnhancedInventory = () => {
           alert('Some items may not have been deleted');
         }
       }
-    }
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setEditingBook(null);
-  };
-
-  const handleStockUpdate = (book) => {
-    setStockUpdateBook(book);
-    setStockQuantity(book.stock_quantity.toString());
-    setShowStockModal(true);
-  };
-
-  const handleStockSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const newQuantity = parseInt(stockQuantity);
-      await updateBook(stockUpdateBook.id, {
-        ...stockUpdateBook,
-        stock_quantity: newQuantity
-      });
-
-      // Log stock change activity
-      await window.electronAPI?.logActivity(
-        user.id,
-        'STOCK_UPDATE',
-        `Updated stock for "${stockUpdateBook.title}" from ${stockUpdateBook.stock_quantity} to ${newQuantity}`
-      );
-
-      setShowStockModal(false);
-      setStockUpdateBook(null);
-      setStockQuantity('');
-    } catch (error) {
-      alert('Failed to update stock');
     }
   };
 
@@ -108,11 +84,11 @@ const EnhancedInventory = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-gray-900">Enhanced Inventory Management</h1>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleRegister}
             className="btn-primary"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Book
+            Register New Book
           </button>
           {(user?.role === 'admin' || user?.role === 'manager') && books.length > 0 && (
             <button
@@ -283,18 +259,18 @@ const EnhancedInventory = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => handleEdit(book)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Edit Book"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleStockUpdate(book)}
+                        onClick={() => handleRestock(book)}
                         className="text-green-600 hover:text-green-900"
-                        title="Update Stock"
+                        title="Restock"
                       >
                         <Package className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(book)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Edit Details"
+                      >
+                        <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handlePriceHistory(book)}
@@ -319,68 +295,33 @@ const EnhancedInventory = () => {
         </div>
       </div>
 
-      {/* Book Modal */}
-      {showModal && (
-        <BookModal
-          book={editingBook}
-          onClose={handleModalClose}
+      {/* Register Modal */}
+      {showRegisterModal && (
+        <RegisterBookModal
+          onClose={() => setShowRegisterModal(false)}
         />
       )}
 
-      {/* Stock Update Modal */}
-      {showStockModal && stockUpdateBook && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold">Update Stock</h3>
-              <button
-                onClick={() => setShowStockModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
+      {/* Restock Modal */}
+      {showRestockModal && selectedBook && (
+        <RestockModal
+          book={selectedBook}
+          onClose={() => {
+            setShowRestockModal(false);
+            setSelectedBook(null);
+          }}
+        />
+      )}
 
-            <div className="mb-4">
-              <h4 className="font-medium text-gray-900">{stockUpdateBook.title}</h4>
-              <p className="text-sm text-gray-600">by {stockUpdateBook.author}</p>
-              <p className="text-sm text-gray-500">Current stock: {stockUpdateBook.stock_quantity}</p>
-            </div>
-
-            <form onSubmit={handleStockSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  New Stock Quantity
-                </label>
-                <input
-                  type="number"
-                  value={stockQuantity}
-                  onChange={(e) => setStockQuantity(e.target.value)}
-                  min="0"
-                  required
-                  className="input w-full"
-                  placeholder="Enter new stock quantity"
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowStockModal(false)}
-                  className="btn-secondary flex-1"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1"
-                >
-                  Update Stock
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* Edit Modal */}
+      {showEditModal && selectedBook && (
+        <EditBookModal
+          book={selectedBook}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedBook(null);
+          }}
+        />
       )}
 
       {/* Price History Modal */}

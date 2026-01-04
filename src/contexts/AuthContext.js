@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   const isElectron = window.require && window.require('electron');
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = sessionStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('user', JSON.stringify(userData));
       return userData;
     } catch (error) {
       throw error;
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = (data) => {
     const newUser = { ...user, ...data };
     setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    sessionStorage.setItem('user', JSON.stringify(newUser));
   };
 
   const logout = async () => {
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       setUser(null);
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
     } catch (error) {
       console.error('Logout error:', error);
     }

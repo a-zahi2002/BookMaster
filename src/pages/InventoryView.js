@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useBooks } from '../contexts/BookContext';
 import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
-import BookModal from './BookModal';
+import RegisterBookModal from '../components/modals/RegisterBookModal';
+import RestockModal from '../components/modals/RestockModal';
+import EditBookModal from '../components/modals/EditBookModal';
 
 const InventoryView = () => {
   /* State */
@@ -193,10 +195,20 @@ const InventoryView = () => {
         </div>
       </div>
 
-      {showModal && (
-        <BookModal
+      {showModal && modalMode === 'register' && (
+        <RegisterBookModal
+          onClose={handleModalClose}
+        />
+      )}
+      {showModal && modalMode === 'update' && (
+        <RestockModal
           book={editingBook}
-          mode={modalMode}
+          onClose={handleModalClose}
+        />
+      )}
+      {showModal && modalMode === 'edit' && (
+        <EditBookModal
+          book={editingBook}
           onClose={handleModalClose}
         />
       )}
