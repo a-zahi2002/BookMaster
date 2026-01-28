@@ -3,7 +3,7 @@
 A modern, full-featured Point of Sale (POS) system designed specifically for bookstores. Built with React and Electron, featuring role-based access control, real-time inventory management, and crash-proof database transactions.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-Proprietary-red)
 ![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react)
 ![Electron](https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron)
 
@@ -365,19 +365,40 @@ BookMaster/
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+**Note:** This is proprietary software. Contributions and modifications require explicit permission from the owner.
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -m "Add feature-name"`
-4. Push to branch: `git push origin feature-name`
-5. Open a pull request
+If you're interested in contributing to this project:
+
+1. **Contact the owner** for permission: a.zahi2002@gmail.com
+2. Wait for written approval before proceeding
+3. Once approved, follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md)
+
+Unauthorized contributions, forks, or modifications are not permitted under the license terms.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+**Proprietary and Confidential**
+
+Copyright (c) 2026 Asmed Sahee M.P. All Rights Reserved.
+
+This software is proprietary and confidential. It is made publicly visible for **educational purposes only**.
+
+### Usage Restrictions:
+- ✗ **No Commercial Use** - Cannot be used for business or commercial purposes
+- ✗ **No Modification** - Cannot be modified without permission
+- ✗ **No Distribution** - Cannot be distributed or shared
+- ✗ **Educational Viewing Only** - Available for learning purposes only
+
+### Permission Required:
+Any use, modification, or commercialization requires **explicit written permission** from the owner.
+
+**For licensing inquiries, contact:**
+- **Email**: a.zahi2002@gmail.com
+- **GitHub**: [@a-zahi2002](https://github.com/a-zahi2002)
+
+See the [LICENSE](LICENSE) file for complete terms and conditions.
 
 ---
 
