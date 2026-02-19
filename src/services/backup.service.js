@@ -145,18 +145,37 @@ class BackupService {
 
       // Create database backup
       // Use VACUUM INTO for thread-safe live backup (requires SQLite 3.27+)
-      // Escape backslashes for Windows paths in SQL string
       const sanitizedPath = backupPath.replace(/\\/g, '\\\\');
+
+      // Debug logging
+      const logDebug = async (msg) => {
+        const logPath = path.join(process.cwd(), 'backup-debug.log');
+        await fs.appendFile(logPath, `${new Date().toISOString()} - ${msg}\n`);
+      };
+
       try {
+        await logDebug(`Starting local backup to: ${backupPath}`);
         // Ensure file doesn't exist (VACUUM INTO requires target not to exist)
         await fs.unlink(backupPath).catch(() => { });
         await this.db.run(`VACUUM INTO '${sanitizedPath}'`);
+        await logDebug('VACUUM INTO successful');
       } catch (bkError) {
+        await logDebug(`VACUUM INTO failed: ${bkError.message}. Attempting fallback...`);
         console.error('VACUUM INTO failed, falling back to file copy:', bkError);
         // Fallback: Flush WAL and copy file
-        await this.db.run('PRAGMA wal_checkpoint(TRUNCATE)');
-        const sourcePath = path.join(app.getPath('userData'), 'database.sqlite');
-        await fs.copyFile(sourcePath, backupPath);
+        try {
+          await this.db.run('PRAGMA wal_checkpoint(TRUNCATE)');
+          const sourcePath = path.join(app.getPath('userData'), 'database.sqlite');
+
+          // Wait a small bit for checkpoint to clear locks
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          await fs.copyFile(sourcePath, backupPath);
+          await logDebug('Fallback copy successful');
+        } catch (copyError) {
+          await logDebug(`Fallback copy failed: ${copyError.message}`);
+          throw copyError;
+        }
       }
 
       // Create logs backup
@@ -172,6 +191,8 @@ class BackupService {
       };
     } catch (error) {
       console.error('Local backup creation error:', error);
+      const logPath = path.join(process.cwd(), 'backup-debug.log');
+      await fs.appendFile(logPath, `${new Date().toISOString()} - CRITICAL FAILURE: ${error.message}\n`).catch(() => { });
       throw error;
     }
   }

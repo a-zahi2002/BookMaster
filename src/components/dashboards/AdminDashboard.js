@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBooks } from '../../contexts/BookContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -28,6 +28,20 @@ const AdminDashboard = () => {
 
   // Notification System State
   const [showNotifications, setShowNotifications] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   const [notifications, setNotifications] = useState([
     { id: 1, title: 'System Backup Successful', message: 'Daily backup completed successfully.', time: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), unread: true, type: 'success' },
     { id: 2, title: 'Low Stock Alert', message: 'The Great Gatsby is running low on stock.', time: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), unread: true, type: 'warning' },
@@ -626,7 +640,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Notification Bell */}
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="h-10 w-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors relative"

@@ -6,6 +6,25 @@ const { open } = require('sqlite');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 
+// Manual .env loading
+try {
+    const envPath = path.join(__dirname, '.env');
+    if (fs.existsSync(envPath)) {
+        const envConfig = fs.readFileSync(envPath, 'utf8');
+        envConfig.split('\n').forEach(line => {
+            const match = line.match(/^([^=]+)=(.*)$/);
+            if (match) {
+                const key = match[1].trim();
+                const value = match[2].trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+                process.env[key] = value;
+            }
+        });
+        console.log('.env file loaded successfully');
+    }
+} catch (e) {
+    console.error('Error loading .env file:', e);
+}
+
 // Configure logging
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
@@ -782,6 +801,10 @@ ipcMain.handle('get-backup-path', async () => {
 // Google Drive IPC handlers
 ipcMain.handle('connect-google-drive', async () => {
     try {
+        if (!process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID === 'your_google_client_id_here') {
+            throw new Error('Google Drive Client ID is missing or invalid. Please configure .env file.');
+        }
+
         // You would need to set up Google Drive credentials
         const credentials = {
             client_id: process.env.GOOGLE_CLIENT_ID,

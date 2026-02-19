@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBooks } from '../../contexts/BookContext';
 import Sidebar from '../common/Sidebar';
@@ -8,7 +8,7 @@ import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
 import BackupManagement from '../BackupManagement';
 import ReportsView from '../Analytics/ReportsView';
 import AIInsightsPanel from '../AI/AIInsightsPanel';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const ManagerDashboard = () => {
   const { user, logout } = useAuth();
@@ -16,6 +16,49 @@ const ManagerDashboard = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [showAddBookModal, setShowAddBookModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'Daily Sales Goal Reached', message: 'Congratulations! Daily sales goal of LKR 50,000 has been exceeded.', time: new Date(Date.now() - 1000 * 60 * 30).toISOString(), unread: true, type: 'success' },
+    { id: 2, title: 'Low Stock Alert', message: 'Inventory for "The Great Gatsby" is below threshold.', time: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), unread: true, type: 'warning' },
+    { id: 3, title: 'Staff Schedule Update', message: 'New schedule for next week has been posted.', time: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), unread: false, type: 'info' }
+  ]);
+
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleDeleteNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleClearNotifications = () => {
+    setNotifications([]);
+  };
+
+  const calculateTimeAgo = (dateString) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours === 1) return '1h Ago';
+    if (diffInHours < 24) return `${diffInHours}h Ago`;
+    return date.toLocaleDateString();
+  };
 
   useEffect(() => {
     getBooks();
@@ -191,6 +234,86 @@ const ManagerDashboard = () => {
                 {sidebarItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">Manager Portal</p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-6">
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-bold text-gray-700">
+                {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span className="text-xs text-gray-500">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </span>
+            </div>
+
+            {/* Notification Bell */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="h-10 w-10 bg-white rounded-full flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors relative"
+              >
+                <span className="text-xl">🔔</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                  <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                    <h3 className="font-semibold text-gray-900">Notifications</h3>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={handleClearNotifications}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium hover:underline"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        <span className="text-2xl block mb-2">🔕</span>
+                        <p className="text-sm">No new notifications</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-50">
+                        {notifications.map((notification) => (
+                          <div key={notification.id} className={`p-4 hover:bg-gray-50 transition-colors relative group ${notification.unread ? 'bg-blue-50/30' : ''}`}>
+                            <div className="flex justify-between items-start mb-1">
+                              <h4 className={`text-sm font-medium ${notification.type === 'warning' ? 'text-amber-700' : notification.type === 'error' ? 'text-red-700' : 'text-gray-900'}`}>
+                                {notification.title}
+                              </h4>
+                              <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                                {calculateTimeAgo(notification.time)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600 leading-relaxed pr-6">
+                              {notification.message}
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteNotification(notification.id);
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Dismiss"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
