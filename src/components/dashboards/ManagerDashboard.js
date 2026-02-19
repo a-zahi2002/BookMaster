@@ -3,11 +3,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useBooks } from '../../contexts/BookContext';
 import Sidebar from '../common/Sidebar';
 import EnhancedInventory from '../EnhancedInventory';
-import UserManagement from '../UserManagement';
 import AddBookModal from '../modals/AddBookModal';
 import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
 import BackupManagement from '../BackupManagement';
-
 import ReportsView from '../Analytics/ReportsView';
 import AIInsightsPanel from '../AI/AIInsightsPanel';
 import { Menu } from 'lucide-react';
@@ -26,7 +24,6 @@ const ManagerDashboard = () => {
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: '🏠' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
-    { id: 'users', label: 'User Management', icon: '👥' },
     { id: 'inventory', label: 'Inventory Management', icon: '📚' },
     { id: 'backup', label: 'Backup & Cloud', icon: '☁️' },
     { id: 'ai', label: 'AI Insights', icon: '🧠' },
@@ -157,9 +154,6 @@ const ManagerDashboard = () => {
 
       case 'inventory':
         return <EnhancedInventory />;
-
-      case 'users':
-        return <UserManagement />;
 
       case 'reports':
         return <ReportsView onNavigate={setActiveSection} />;

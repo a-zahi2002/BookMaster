@@ -105,7 +105,6 @@ const AdminDashboard = () => {
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
-  /* ... handlers for backup/export ... */
   const handleBackup = async () => {
     try {
       if (window.electronAPI) {
