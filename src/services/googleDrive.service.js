@@ -12,7 +12,7 @@ class GoogleDriveService {
   async authenticate(credentials) {
     try {
       const { client_id, client_secret, redirect_uri } = credentials;
-      
+
       this.auth = new google.auth.OAuth2(
         client_id,
         client_secret,
@@ -36,10 +36,10 @@ class GoogleDriveService {
       this.auth.setCredentials(tokens);
       this.drive = google.drive({ version: 'v3', auth: this.auth });
       this.isConnected = true;
-      
+
       // Save tokens for future use
       await this.saveTokens(tokens);
-      
+
       return { success: true };
     } catch (error) {
       console.error('Error setting tokens:', error);
@@ -48,16 +48,18 @@ class GoogleDriveService {
   }
 
   async saveTokens(tokens) {
-    const tokensPath = path.join(__dirname, '../config/google-tokens.json');
-    await fs.writeFile(tokensPath, JSON.stringify(tokens, null, 2));
+    const { app } = require('electron');
+    const tokensPath = path.join(app.getPath('userData'), 'google-tokens.json');
+    await fs.writeFile(tokensPath, JSON.stringify(tokens, null, 2), { mode: 0o600 });
   }
 
   async loadSavedTokens() {
     try {
-      const tokensPath = path.join(__dirname, '../config/google-tokens.json');
+      const { app } = require('electron');
+      const tokensPath = path.join(app.getPath('userData'), 'google-tokens.json');
       const tokensData = await fs.readFile(tokensPath, 'utf8');
       const tokens = JSON.parse(tokensData);
-      
+
       if (tokens.refresh_token) {
         await this.setTokens(tokens);
         return true;
@@ -76,7 +78,7 @@ class GoogleDriveService {
     try {
       // Check if backup file already exists
       const existingFile = await this.findBackupFile(fileName);
-      
+
       const fileMetadata = {
         name: fileName,
         parents: ['appDataFolder'] // Store in app-specific folder

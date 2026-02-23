@@ -284,11 +284,11 @@ Key dependencies and their purposes:
 |---------|---------|
 | `react` | UI framework |
 | `electron` | Desktop app framework |
-| `sqlite3` | Database driver |
-| `express` | Backend framework |
+| `sqlite` & `sqlite3` | Database driver |
 | `tailwindcss` | Styling |
-| `chart.js` | Analytics charts |
-| `axios` | HTTP requests |
+| `recharts` | Analytics charts |
+| `googleapis` | Google Drive integration |
+| `lucide-react`| UI icons |
 
 See `package.json` for complete list and versions.
 

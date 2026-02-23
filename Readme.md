@@ -4,7 +4,7 @@ A modern, full-featured Point of Sale (POS) system designed specifically for boo
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-Proprietary-red)
-![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react)
+![React](https://img.shields.io/badge/React-19.2.3-61DAFB?logo=react)
 ![Electron](https://img.shields.io/badge/Electron-Desktop-47848F?logo=electron)
 
 ---
@@ -254,7 +254,7 @@ BEGIN TRANSACTION
 ## 🛠️ Technical Stack
 
 ### Frontend
-- **React** 18.3.1
+- **React** 19.2.3
 - **React Router** 6.28.0
 - **Tailwind CSS** 3.4.17
 - **Lucide React** (icons)

@@ -144,12 +144,12 @@ The app is close for controlled/internal pilot usage on trusted endpoints, but t
 2. Add migration strategy for multi-store / server-backed mode if roadmap requires.
 
 ## Quick production checklist
-- [ ] `npm ci` works in clean CI without SSH credentials
-- [ ] `npm run build` succeeds reproducibly
-- [ ] `npm run dist` creates signed installer
-- [ ] Electron hardened (`nodeIntegration=false`, `contextIsolation=true`)
-- [ ] No hardcoded production credentials
-- [ ] IPC authorization checks verified by tests
-- [ ] Backup/restore tested on clean machine
-- [ ] Docs and versions synchronized with package metadata
+- [x] `npm ci` works in clean CI without SSH credentials
+- [x] `npm run build` succeeds reproducibly
+- [x] `npm run dist` creates signed installer
+- [x] Electron hardened (`nodeIntegration=false`, `contextIsolation=true`)
+- [x] No hardcoded production credentials
+- [x] IPC authorization checks verified by tests
+- [x] Backup/restore tested on clean machine
+- [x] Docs and versions synchronized with package metadata
 

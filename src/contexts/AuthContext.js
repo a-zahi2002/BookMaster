@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const isElectron = window.require && window.require('electron');
+  const isElectron = !!window.electronAPI;
 
   useEffect(() => {
     const savedUser = sessionStorage.getItem('user');
@@ -29,8 +29,7 @@ export const AuthProvider = ({ children }) => {
       let userData;
 
       if (isElectron) {
-        const { ipcRenderer } = window.require('electron');
-        userData = await ipcRenderer.invoke('login', { username, password });
+        userData = await window.electronAPI.login({ username, password });
       } else {
         userData = await webLogin(username, password);
       }
@@ -44,6 +43,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const webLogin = async (username, password) => {
+    if (process.env.NODE_ENV !== 'development') {
+      throw new Error('Web login is only available in development mode for demo purposes.');
+    }
     const users = [
       { id: 1, username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator' },
       { id: 2, username: 'manager', password: 'manager123', role: 'manager', name: 'Manager' },
@@ -69,8 +71,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       if (isElectron) {
-        const { ipcRenderer } = window.require('electron');
-        await ipcRenderer.invoke('logout');
+        await window.electronAPI.logout();
       }
 
       setUser(null);

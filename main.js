@@ -6,27 +6,20 @@ const { open } = require('sqlite');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
 
-// Manual .env loading
+// Secure .env loading (prioritizes userData for prod, then local)
 try {
-    const envPath = path.join(__dirname, '.env');
-    if (fs.existsSync(envPath)) {
-        const envConfig = fs.readFileSync(envPath, 'utf8');
-        envConfig.split('\n').forEach(line => {
-            const match = line.match(/^([^=]+)=(.*)$/);
-            if (match) {
-                const key = match[1].trim();
-                const value = match[2].trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
-                process.env[key] = value;
-            }
-        });
-        console.log('.env file loaded successfully');
-    }
+    const dotenv = require('dotenv');
+    dotenv.config({ path: path.join(app.getPath('userData'), '.env') });
+    dotenv.config({ path: path.join(__dirname, '.env') });
+    console.log('.env loaded from userData or local');
 } catch (e) {
     console.error('Error loading .env file:', e);
 }
 
 // Configure logging
 log.transports.file.level = 'info';
+log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}';
+log.transports.file.maxSize = 5 * 1024 * 1024; // 5 MB rotate
 autoUpdater.logger = log;
 
 // Import services
@@ -42,6 +35,19 @@ let userManagementService;
 let backupService;
 let inventoryService;
 let aiService;
+
+// Active User Sessions
+const activeSessions = new Map();
+
+// Helper to get current user ID
+function getCurrentUserId(event) {
+    if (!event || !event.sender) return 1; // Fallback
+    const user = activeSessions.get(event.sender.id);
+    if (!user && process.env.NODE_ENV !== 'development') {
+        console.warn('Unauthorized IPC access attempt');
+    }
+    return user ? user.id : 1;
+}
 
 // Auto-updater initialization
 function initializeAutoUpdater() {
@@ -173,6 +179,19 @@ async function initializeDatabase() {
         // Load saved Google Drive tokens
         await googleDriveService.loadSavedTokens();
 
+        // Perform health checks
+        try {
+            await db.get('SELECT 1');
+            console.log('Health check: Database responsive');
+
+            const backupPath = await backupService.getBackupPath();
+            // Basic sanity check on the backup path (is it accessible/writable)
+            await fs.promises.access(backupPath, fs.constants.W_OK);
+            console.log('Health check: Backup path is writable');
+        } catch (healthError) {
+            console.error('Health check failed. The app may be unstable:', healthError);
+        }
+
     } catch (error) {
         console.error('Database initialization error:', error);
     }
@@ -198,8 +217,10 @@ function createWindow() {
         autoHideMenuBar: true, // Hide the menu bar
         icon: appIconPath,     // Sets the window icon (taskbar, ALT+TAB, title bar)
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true,
+            enableRemoteModule: false,
             preload: path.join(__dirname, 'backend/preload.js')
         }
     });
@@ -226,20 +247,25 @@ function createWindow() {
         mainWindow.loadFile(path.join(__dirname, 'build/index.html'));
     }
 
-    // Clear session and ensure login screen on every app start
+    // Clear session and ensure login screen on every app start, unless disabled.
+    // Default is true for POS/kiosk mode security.
     mainWindow.webContents.on('did-finish-load', () => {
         console.log('Window finished loading content');
-        // Clear localStorage to force logout and show login screen
-        mainWindow.webContents.executeJavaScript(`
-localStorage.removeItem('user');
-sessionStorage.clear();
-// Redirect to login if not already there
-if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-    window.location.href = '/login';
-}
-`).catch(err => {
-            console.error('Error clearing session:', err);
-        });
+        const forceLogout = process.env.FORCE_LOGOUT_ON_BOOT !== 'false';
+
+        if (forceLogout) {
+            // Clear localStorage to force logout and show login screen
+            mainWindow.webContents.executeJavaScript(`
+        localStorage.removeItem('user');
+        sessionStorage.clear();
+        // Redirect to login if not already there
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+            window.location.href = '/login';
+        }
+        `).catch(err => {
+                console.error('Error clearing session:', err);
+            });
+        }
     });
 
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
@@ -272,6 +298,7 @@ app.whenReady().then(async () => {
 ipcMain.handle('login', async (event, credentials) => {
     try {
         const user = await userManagementService.authenticateUser(credentials.username, credentials.password);
+        activeSessions.set(event.sender.id, user); // Track session
         return user;
     } catch (error) {
         console.error('Login failed:', error);
@@ -281,6 +308,7 @@ ipcMain.handle('login', async (event, credentials) => {
 
 ipcMain.handle('logout', async (event, userId) => {
     try {
+        activeSessions.delete(event.sender.id); // Clear session
         if (userId) {
             await userManagementService.logActivity(userId, 'LOGOUT', 'User logged out');
         }
@@ -295,7 +323,7 @@ ipcMain.handle('logout', async (event, userId) => {
 ipcMain.handle('create-user', async (event, userData) => {
     try {
         // Get current user from session (you might want to implement session management)
-        const result = await userManagementService.createUser(userData, 1); // Assuming admin user ID is 1
+        const result = await userManagementService.createUser(userData, getCurrentUserId(event));
         return result;
     } catch (error) {
         console.error('Error creating user:', error);
@@ -314,7 +342,7 @@ ipcMain.handle('get-users', async () => {
 
 ipcMain.handle('update-user', async (event, userId, updateData) => {
     try {
-        return await userManagementService.updateUser(userId, updateData, 1); // Assuming admin user ID is 1
+        return await userManagementService.updateUser(userId, updateData, getCurrentUserId(event));
     } catch (error) {
         console.error('Error updating user:', error);
         throw error;
@@ -323,7 +351,7 @@ ipcMain.handle('update-user', async (event, userId, updateData) => {
 
 ipcMain.handle('reset-password', async (event, userId, newPassword) => {
     try {
-        return await userManagementService.resetPassword(userId, newPassword, 1); // Assuming admin user ID is 1
+        return await userManagementService.resetPassword(userId, newPassword, getCurrentUserId(event));
     } catch (error) {
         console.error('Error resetting password:', error);
         throw error;
@@ -332,7 +360,7 @@ ipcMain.handle('reset-password', async (event, userId, newPassword) => {
 
 ipcMain.handle('toggle-user-status', async (event, userId) => {
     try {
-        return await userManagementService.toggleUserStatus(userId, 1); // Assuming admin user ID is 1
+        return await userManagementService.toggleUserStatus(userId, getCurrentUserId(event));
     } catch (error) {
         console.error('Error toggling user status:', error);
         throw error;
@@ -360,7 +388,7 @@ ipcMain.handle('get-price-history', async (event, bookId) => {
 // Book Management IPC handlers
 ipcMain.handle('register-book', async (event, bookData) => {
     try {
-        const result = await inventoryService.registerBook(bookData, bookData.userId || 1);
+        const result = await inventoryService.registerBook(bookData, bookData.userId || getCurrentUserId(event));
         return result;
     } catch (error) {
         console.error('Database error:', error);
@@ -370,7 +398,7 @@ ipcMain.handle('register-book', async (event, bookData) => {
 
 ipcMain.handle('restock-book', async (event, stockData) => {
     try {
-        const result = await inventoryService.restockBook(stockData.bookId, stockData, stockData.userId || 1);
+        const result = await inventoryService.restockBook(stockData.bookId, stockData, stockData.userId || getCurrentUserId(event));
         return result;
     } catch (error) {
         console.error('Database error:', error);
@@ -380,7 +408,7 @@ ipcMain.handle('restock-book', async (event, stockData) => {
 
 ipcMain.handle('update-book-details', async (event, updateData) => {
     try {
-        const result = await inventoryService.updateBookDetails(updateData.id, updateData, updateData.userId || 1);
+        const result = await inventoryService.updateBookDetails(updateData.id, updateData, updateData.userId || getCurrentUserId(event));
         return result;
     } catch (error) {
         console.error('Database error:', error);
@@ -413,7 +441,7 @@ ipcMain.handle('delete-book', async (event, id) => {
         await db.run('DELETE FROM books WHERE id = ?', [id]);
 
         // Log activity
-        await userManagementService.logActivity(1, 'DELETE_BOOK', `Deleted book: ${book?.title || 'Unknown'} `);
+        await userManagementService.logActivity(getCurrentUserId(event), 'DELETE_BOOK', `Deleted book: ${book?.title || 'Unknown'} `);
 
         return { success: true };
     } catch (error) {
@@ -587,7 +615,7 @@ ipcMain.handle('process-sale', async (event, saleData) => {
         const saleResult = await db.run(
             `INSERT INTO sales(total_amount, payment_method, cashier_id, cash_received, change_given, status)
 VALUES(?, ?, ?, ?, ?, 'COMPLETED')`,
-            [totalAmount, saleData.paymentMethod, saleData.cashierId || 1, saleData.cashReceived || totalAmount, changeGiven]
+            [totalAmount, saleData.paymentMethod, saleData.cashierId || getCurrentUserId(event), saleData.cashReceived || totalAmount, changeGiven]
         );
 
         const saleId = saleResult.lastID;
@@ -610,7 +638,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?)`,
 
         // Step 4: Log activity
         await userManagementService.logActivity(
-            saleData.cashierId || 1,
+            saleData.cashierId || getCurrentUserId(event),
             'SALE_COMPLETED',
             `Sale completed: ${saleItems.length} items, Total: ${totalAmount} `
         );
@@ -677,7 +705,7 @@ ipcMain.handle('delete-all-sales', async (event) => {
         await db.run('DELETE FROM sales');
 
         // Log this critical action (assuming admin/manager)
-        await userManagementService.logActivity(1, 'DELETE_ALL_DATA', 'Cleared all analytics/sales data');
+        await userManagementService.logActivity(getCurrentUserId(event), 'DELETE_ALL_DATA', 'Cleared all analytics/sales data');
 
         return { success: true };
     } catch (error) {
@@ -722,7 +750,7 @@ s.transaction_date as date,
 // Backup Management IPC handlers
 ipcMain.handle('create-manual-backup', async (event) => {
     try {
-        return await backupService.createManualBackup(1, 'admin'); // Assuming admin user
+        return await backupService.createManualBackup(getCurrentUserId(event), 'admin'); // Assuming admin user
     } catch (error) {
         console.error('Backup error:', error);
         throw error;
@@ -740,7 +768,7 @@ ipcMain.handle('get-backup-history', async () => {
 
 ipcMain.handle('delete-local-backup', async (event, filename) => {
     try {
-        return await backupService.deleteLocalBackup(filename, 1, 'admin');
+        return await backupService.deleteLocalBackup(filename, getCurrentUserId(event), 'admin');
     } catch (error) {
         console.error('Error deleting local backup:', error);
         throw error;
@@ -749,7 +777,7 @@ ipcMain.handle('delete-local-backup', async (event, filename) => {
 
 ipcMain.handle('delete-all-local-backups', async (event) => {
     try {
-        return await backupService.deleteAllLocalBackups(1, 'admin'); // Assuming admin user
+        return await backupService.deleteAllLocalBackups(getCurrentUserId(event), 'admin'); // Assuming admin user
     } catch (error) {
         console.error('Error deleting all local backups:', error);
         throw error;
@@ -758,7 +786,7 @@ ipcMain.handle('delete-all-local-backups', async (event) => {
 
 ipcMain.handle('delete-cloud-backup', async (event, fileId) => {
     try {
-        return await backupService.deleteCloudBackup(fileId, 1, 'admin');
+        return await backupService.deleteCloudBackup(fileId, getCurrentUserId(event), 'admin');
     } catch (error) {
         console.error('Error deleting cloud backup:', error);
         throw error;
@@ -767,7 +795,7 @@ ipcMain.handle('delete-cloud-backup', async (event, fileId) => {
 
 ipcMain.handle('delete-all-cloud-backups', async (event) => {
     try {
-        return await backupService.deleteAllCloudBackups(1, 'admin'); // Assuming admin user
+        return await backupService.deleteAllCloudBackups(getCurrentUserId(event), 'admin'); // Assuming admin user
     } catch (error) {
         console.error('Error deleting all cloud backups:', error);
         throw error;
