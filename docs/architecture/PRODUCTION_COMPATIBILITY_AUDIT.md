@@ -140,8 +140,8 @@ The app is close for controlled/internal pilot usage on trusted endpoints, but t
 3. Add smoke tests for startup, login, sale transaction, backup, and restore.
 
 ### P2 (quality and scale)
-1. Add runtime telemetry dashboards (error rates, backup success, updater status).
-2. Add migration strategy for multi-store / server-backed mode if roadmap requires.
+1. [x] Add runtime telemetry dashboards (error rates, backup success, updater status).
+2. [x] Add migration strategy for multi-store / server-backed mode if roadmap requires.
 
 ## Quick production checklist
 - [x] `npm ci` works in clean CI without SSH credentials

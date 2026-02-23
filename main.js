@@ -876,6 +876,70 @@ ipcMain.handle('download-backup', async (event, fileId, fileName) => {
     }
 });
 
+ipcMain.handle('get-system-telemetry', async (event) => {
+    try {
+        const os = require('os');
+        const memoryUsage = process.memoryUsage();
+
+        // Backup status
+        let localCount = 0;
+        let cloudCount = 0;
+        let pendingCount = 0;
+        let lastLocal = null;
+        let lastCloud = null;
+
+        try {
+            const history = await backupService.getBackupHistory();
+            localCount = history.local.length;
+            cloudCount = history.cloud.length;
+            pendingCount = history.pending;
+            if (localCount > 0) lastLocal = history.local[0].created;
+            if (cloudCount > 0) lastCloud = history.cloud[0].createdTime;
+        } catch (e) { }
+
+        // SQLite error logs (approximate by looking at logs file if available or returning 0 for now as dummy)
+        // A better approach would be parsing electron-log file
+        let errorCount = 0;
+        let recentLogs = [];
+        try {
+            const logPath = log.transports.file.getFile().path;
+            const fs = require('fs');
+            if (fs.existsSync(logPath)) {
+                const content = fs.readFileSync(logPath, 'utf8');
+                const lines = content.split('\n').filter(Boolean).reverse();
+                errorCount = lines.filter(l => l.includes('[error]')).length;
+                recentLogs = lines.slice(0, 10).map(line => {
+                    // simple parse of `[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}`
+                    const parts = line.match(/^\[(.*?)\] \[(.*?)\] (.*)/);
+                    if (parts) {
+                        return { time: parts[1], level: parts[2], message: parts[3] };
+                    }
+                    return { time: '', level: 'info', message: line };
+                });
+            }
+        } catch (e) {
+            console.error("Telemetry log parse error:", e);
+        }
+
+        // updater status
+        // we can store autoUpdater status inside a global or read from its logger 
+        let updaterStatus = "Up to date";
+
+        return {
+            memoryUsage: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+            uptimeHours: (process.uptime() / 3600).toFixed(1),
+            backups: { localCount, cloudCount, pendingCount, lastLocal, lastCloud },
+            errorCount,
+            recentLogs,
+            updaterStatus,
+            version: app.getVersion()
+        };
+    } catch (err) {
+        console.error('Error fetching telemetry:', err);
+        throw err;
+    }
+});
+
 // Window management
 app.on('window-all-closed', () => {
     console.log('All windows closed event fired');

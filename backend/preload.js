@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // System Maintenance
   optimizeDb: () => ipcRenderer.invoke('optimize-db'),
+  getSystemTelemetry: () => ipcRenderer.invoke('get-system-telemetry'),
 
   // Transaction
   processSale: (saleData) => ipcRenderer.invoke('process-sale', saleData),

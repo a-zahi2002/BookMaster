@@ -9,6 +9,7 @@ import BackupManagement from '../BackupManagement';
 import AnalyticsDashboard from '../Analytics/AnalyticsDashboard';
 import ReportsView from '../Analytics/ReportsView';
 import AIInsightsPanel from '../AI/AIInsightsPanel';
+import TelemetryDashboard from './TelemetryDashboard';
 import { Menu, X, CheckCircle } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -116,6 +117,7 @@ const AdminDashboard = () => {
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'ai', label: 'AI Insights', icon: '🧠' },
     { id: 'reports', label: 'Reports & Export', icon: '📋' },
+    { id: 'telemetry', label: 'System Telemetry', icon: '📡' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -217,6 +219,9 @@ const AdminDashboard = () => {
 
       case 'reports':
         return <ReportsView onNavigate={setActiveSection} />;
+
+      case 'telemetry':
+        return <TelemetryDashboard />;
 
       case 'home':
         return (
