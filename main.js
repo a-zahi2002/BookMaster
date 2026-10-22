@@ -270,11 +270,20 @@ function createWindow() {
 
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
         console.error('Failed to load:', errorCode, errorDescription);
+        if (isDev) {
+            console.log('React dev server not ready yet. Retrying in 1s...');
+            setTimeout(() => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.loadURL('http://localhost:3000');
+                }
+            }, 1000);
+        }
     });
 
     mainWindow.on('ready-to-show', () => {
         console.log('Window ready to show');
         mainWindow.show();
+        mainWindow.focus();
     });
 
     mainWindow.on('close', (e) => {
@@ -287,12 +296,28 @@ function createWindow() {
     });
 }
 
-// Call initializeDatabase when app starts
-app.whenReady().then(async () => {
-    await initializeDatabase();
-    createWindow();
-    initializeAutoUpdater();
-});
+// Single instance lock to prevent duplicate processes and window collisions
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+    console.log('Another instance of BookMaster is already running. Quitting duplicate instance.');
+    app.quit();
+} else {
+    app.on('second-instance', () => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.show();
+            mainWindow.focus();
+        }
+    });
+
+    // Call initializeDatabase when app starts
+    app.whenReady().then(async () => {
+        await initializeDatabase();
+        createWindow();
+        initializeAutoUpdater();
+    });
+}
 
 // Authentication IPC handlers
 ipcMain.handle('login', async (event, credentials) => {

@@ -48,14 +48,16 @@
     "url": "https://github.com/a-zahi2002/BookMaster.git"
   },
   "scripts": {
-    "start": "cross-env BROWSER=none NODE_OPTIONS=--no-deprecation react-scripts start",
+    "start": "concurrently -k -n \"REACT,ELECTRON\" -c \"cyan,magenta\" \"npm run react-start\" \"wait-on -t 60000 http-get://127.0.0.1:3000 && cross-env NODE_ENV=development node start_electron.js\"",
+    "dev": "npm start",
+    "react-start": "cross-env BROWSER=none NODE_OPTIONS=--no-deprecation react-scripts start",
+    "web": "cross-env BROWSER=none NODE_OPTIONS=--no-deprecation react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "postinstall": "electron-builder install-app-deps",
     "create-icon": "node scripts/create-icon.js",
     "electron": "node start_electron.js",
-    "dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development node start_electron.js\"",
     "electron-pack": "npm run build && electron .",
     "dist": "npm run build && electron-builder"
   },

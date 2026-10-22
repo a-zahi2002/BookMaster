@@ -2,6 +2,8 @@ const { spawn } = require('child_process');
 const electron = require('electron');
 const path = require('path');
 
+console.log('⚡ Starting BookMaster Electron desktop application...');
+
 // Critical fix: Ensure Electron runs as Electron, not Node
 if (process.env.ELECTRON_RUN_AS_NODE) {
     console.log('Clearing ELECTRON_RUN_AS_NODE environment variable...');
